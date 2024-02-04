@@ -73,54 +73,6 @@ def update_trv(rows):
         trv.insert('', 'end', values=(i[0], idx, *i[1:]))
 
 
-def update_data():
-    try:
-        if messagebox.askyesno("Harap konfirmasi", "Apakah anda yakin ingin memperbarui data ini ?"):
-            # validasi format tanggal lahir
-            if not is_valid_date(v_tanggal_lahir.get()):
-                messagebox.showerror(
-                    "Kesalahan", "Format tanggal lahir tidak valid.")
-                return
-
-            jumlah_pinjaman_value = v_jumlah_pinjaman.get()
-            nip_value = v_nip.get()
-            jangka_waktu_value = v_jangka_waktu.get()
-
-            if not str(jumlah_pinjaman_value or not nip_value or not jangka_waktu_value).isdecimal():
-                messagebox.showerror(
-                    "Error", "Jumlah pinjaman harus berupa bilangan bulat positif")
-                return
-
-            query = """ 
-                UPDATE LOANS
-                SET NAMA=?, NIP=?, INSTANSI=?, ALAMAT=?, TANGGAL_LAHIR=?, JUMLAH_PINJAMAN=?, JANGKA_WAKTU=?, URAIAN=? WHERE ID=?
-            """
-            params = (
-                v_nama.get(),
-                v_nip.get(),
-                v_instansi.get(),
-                v_alamat_rumah.get(),
-                v_tanggal_lahir.get(),
-                v_jumlah_pinjaman.get(),
-                v_jangka_waktu.get(),
-                v_uraian.get(),
-                v_id.get()
-            )
-            cursor.execute(query, params)
-            conn.commit()
-            clear_field()
-            select_all()
-
-            # show success message
-            messagebox.showinfo("Info", "Data berhasil diperbarui.")
-        else:
-            return True
-    except Exception as e:
-        print("Error", e)
-        messagebox.showerror(
-            "Error", "Pastikan format data yang diupdate sudah benar")
-
-
 def add_new():
     try:
         # Ambil nilai dari setiap field
@@ -143,6 +95,11 @@ def add_new():
         if not str(jumlah_pinjaman_value or not nip_value or not jangka_waktu_value).isdecimal():
             messagebox.showerror(
                 "Error", "Jumlah pinjaman harus berupa bilangan bulat positif")
+            return
+        
+        if (jangka_waktu_value > 48):
+            messagebox.showerror(
+                "Error", "Jangka Waktu tidak boleh dari 48 Bulan")
             return
 
         # Memanggil fungsi validasi tanggal lahir
@@ -181,7 +138,59 @@ def add_new():
         print("Error :", e)
         messagebox.showerror(
             "Error", "Pastikan format data yang diupdate sudah benar")
+        
 
+def update_data():
+    try:
+        if messagebox.askyesno("Harap konfirmasi", "Apakah anda yakin ingin memperbarui data ini ?"):
+            # validasi format tanggal lahir
+            if not is_valid_date(v_tanggal_lahir.get()):
+                messagebox.showerror(
+                    "Kesalahan", "Format tanggal lahir tidak valid.")
+                return
+
+            jumlah_pinjaman_value = v_jumlah_pinjaman.get()
+            nip_value = v_nip.get()
+            jangka_waktu_value = v_jangka_waktu.get()
+
+            if not str(jumlah_pinjaman_value or not nip_value or not jangka_waktu_value).isdecimal():
+                messagebox.showerror(
+                    "Error", "Jumlah pinjaman harus berupa bilangan bulat positif")
+                return
+            
+            if (jangka_waktu_value > 48):
+                messagebox.showerror(
+                    "Error", "Jangka Waktu tidak boleh dari 48 Bulan")
+                return
+
+            query = """ 
+                UPDATE LOANS
+                SET NAMA=?, NIP=?, INSTANSI=?, ALAMAT=?, TANGGAL_LAHIR=?, JUMLAH_PINJAMAN=?, JANGKA_WAKTU=?, URAIAN=? WHERE ID=?
+            """
+            params = (
+                v_nama.get(),
+                v_nip.get(),
+                v_instansi.get(),
+                v_alamat_rumah.get(),
+                v_tanggal_lahir.get(),
+                v_jumlah_pinjaman.get(),
+                v_jangka_waktu.get(),
+                v_uraian.get(),
+                v_id.get()
+            )
+            cursor.execute(query, params)
+            conn.commit()
+            clear_field()
+            select_all()
+
+            # show success message
+            messagebox.showinfo("Info", "Data berhasil diperbarui.")
+        else:
+            return True
+    except Exception as e:
+        print("Error", e)
+        messagebox.showerror(
+            "Error", "Pastikan format data yang diupdate sudah benar")
 
 def getrow(event):
     rowid = trv.identify_row(event.y)
@@ -338,7 +347,7 @@ jumlahpinjaman_entry = ttk.Entry(form_frame, textvariable=v_jumlah_pinjaman)
 jumlahpinjaman_entry.grid(row=1, column=3, sticky="w", padx=5, pady=5)
 
 # Label dan Entry untuk Jangka waktu
-label_jangkawaktu = ttk.Label(form_frame, text="Jangka Waktu")
+label_jangkawaktu = ttk.Label(form_frame, text="Jangka Waktu (bulan)")
 label_jangkawaktu.grid(row=2, column=2, sticky="w", padx=5, pady=5)
 jangkawaktu_entry = ttk.Entry(form_frame, textvariable=v_jangka_waktu)
 jangkawaktu_entry.grid(row=2, column=3, sticky="w", padx=5, pady=5)
