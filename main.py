@@ -117,7 +117,8 @@ def update_data():
             return True
     except Exception as e:
         print("Error", e)
-        messagebox.showerror("Error", "Pastikan format data yang diupdate sudah benar")
+        messagebox.showerror(
+            "Error", "Pastikan format data yang diupdate sudah benar")
 
 
 def add_new():
@@ -131,6 +132,9 @@ def add_new():
         jumlah_pinjaman_value = v_jumlah_pinjaman.get()
         jangka_waktu_value = v_jangka_waktu.get()
         uraian_value = v_uraian.get()
+        resiko_kredit_value = 1.5/100 * jumlah_pinjaman_value
+        bagi_hasil_value = 0.01 * jumlah_pinjaman_value
+
 
         if not nama_value or not nip_value or not tanggal_lahir_value or not jumlah_pinjaman_value or not jangka_waktu_value:
             messagebox.showerror("Error", "Semua field harus diisi.")
@@ -162,10 +166,10 @@ def add_new():
             "TANGGAL_LAHIR": tanggal_lahir_value,
             "JUMLAH_PINJAMAN": jumlah_pinjaman_value,
             "JANGKA_WAKTU": jangka_waktu_value,
-            "RESIKO_KREDIT": 1.5 * jumlah_pinjaman_value,
-            "BAGI_HASIL": 0.01 * jumlah_pinjaman_value,
+            "RESIKO_KREDIT": resiko_kredit_value,
+            "BAGI_HASIL": bagi_hasil_value,
             "POKOK": jumlah_pinjaman_value / jangka_waktu_value,
-            "TERIMA_BERSIH": jumlah_pinjaman_value - (1.5 * jumlah_pinjaman_value),
+            "TERIMA_BERSIH": jumlah_pinjaman_value - resiko_kredit_value,
             "URAIAN": uraian_value
         }
         cursor.execute(query, params)
@@ -175,7 +179,8 @@ def add_new():
         clear_field()
     except Exception as e:
         print("Error :", e)
-        messagebox.showerror("Error", "Pastikan format data yang diupdate sudah benar")
+        messagebox.showerror(
+            "Error", "Pastikan format data yang diupdate sudah benar")
 
 
 def getrow(event):
@@ -222,10 +227,12 @@ def delete_data():
     except Exception as e:
         print("Error :", e)
 
+
 def export_data():
     try:
         # Menampilkan dialog untuk memilih lokasi penyimpanan file Excel
-        file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel Files", "*.xlsx")])
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".xlsx", filetypes=[("Excel Files", "*.xlsx")])
 
         if file_path:
             # Mengambil data dari database
@@ -235,17 +242,18 @@ def export_data():
 
         # Membuat DataFrame dari data
         df = pd.DataFrame(rows, columns=[
-            'ID', 'NAMA', 'NIP', 'INSTANSI', 'TANGGAL_LAHIR', 'ALAMAT', 'JUMLAH_PINJAMAN', 'JANGKA_WAKTU','RESIKO_KREDIT', 'BAGI_HASIL', 'POKOK', 'TERIMA_BERSIH', 'URAIAN'
+            'ID', 'NAMA', 'NIP', 'INSTANSI', 'TANGGAL_LAHIR', 'ALAMAT', 'JUMLAH_PINJAMAN', 'JANGKA_WAKTU', 'RESIKO_KREDIT', 'BAGI_HASIL', 'POKOK', 'TERIMA_BERSIH', 'URAIAN'
         ])
 
         # Menyimpan DataFrame ke file Excel
         df.to_excel(file_path, index=False)
-        
+
         # Menampilkan pesan sukses
         messagebox.showinfo("Info", f"Data berhasil diekspor ke {file_path}")
     except Exception as e:
         print("Error :", e)
-        messagebox.showerror("Error", "Terjadi kesalahan saat mengekspor data.")
+        messagebox.showerror(
+            "Error", "Terjadi kesalahan saat mengekspor data.")
 
 
 def search():
@@ -367,7 +375,7 @@ cbtn.pack(side=LEFT, padx=6)
 
 # Wrapper 1 - Tabel dari data simpan pinjam
 trv = ttk.Treeview(wrapper1, column=(0, 1, 2, 3, 4, 5, 6, 7,
-                   8, 9, 10, 11, 12, 13), show="headings", height=13)
+                   8, 9, 10, 11, 12, 13), show="headings", height=12)
 style = ttk.Style()
 # ["aqua", "step", "clam", "alt", "default", "classic"]
 style.theme_use("clam")
@@ -415,6 +423,10 @@ xscrollbar = Scrollbar(wrapper1, orient="horizontal", command=trv.xview)
 xscrollbar.pack(side=BOTTOM, fill="x")
 
 trv.configure(yscrollcommand=yscrollbar.set, xscrollcommand=xscrollbar.set)
+
+# Always show the horizontal scrollbar
+trv.columnconfigure(0, weight=1)
+
 
 if __name__ == '__main__':
     root.title("Aplikasi Simpan Pinjam")
