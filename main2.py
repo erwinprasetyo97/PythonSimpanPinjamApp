@@ -375,15 +375,14 @@ frame3 = ttk.Frame(notebook, width=400, height=280)
 frame4 = ttk.Frame(notebook, width=400, height=280)
 frame5 = ttk.Frame(notebook, width=400, height=280)
 
-frame1.pack(fill='both', expand=True)
-frame2.pack(fill='both', expand=True)
-frame3.pack(fill='both', expand=True)
-frame4.pack(fill='both', expand=True)
-frame5.pack(fill='both', expand=True)
+frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
+frame2.grid(row=0, column=0, sticky="nsew")
+frame3.grid(row=0, column=0, sticky="nsew")
+frame4.grid(row=0, column=0, sticky="nsew")
+frame5.grid(row=0, column=0, sticky="nsew")
 
 # Add Frames to notebook
 notebook.add(frame1, text='Semua')
-
 notebook.add(frame2, text='Per Jumlah Pinjaman')
 notebook.add(frame3, text='Per Resiko Kredit')
 notebook.add(frame4, text='Per Bagi Hasil')
@@ -479,65 +478,54 @@ btn.pack(side=LEFT, padx=6, pady=15)
 cbtn = Button(wrapperPencarian, text="Clear", command=clear)
 cbtn.pack(side=LEFT, padx=6)
 
-# Frame1 - Tampilkan semua dari database
-trv = ttk.Treeview(frame1, column=(0, 1, 2, 3, 4, 5, 6, 7,
-                   8, 9, 10, 11, 12), show="headings", height=12)
-style = ttk.Style()
-# ["aqua", "step", "clam", "alt", "default", "classic"]
-style.theme_use("clam")
-trv.pack(side=RIGHT)
-trv.place(x=0, y=0)
+# Function untuk create treeview
+def create_treview(frame, columns, headers, widths, bind_function=None):
+    trv = ttk.Treeview(frame, column=columns, show="headings", height=12)
 
-trv.heading(0, text="Id")
-trv.heading(1, text="No")
-trv.heading(2, text="Nama")
-trv.heading(3, text="NIP")
-trv.heading(4, text="Puskesmas")
-trv.heading(5, text="Tanggal Lahir")
-trv.heading(6, text="Alamat Rumah")
-trv.heading(7, text="Jumlah Pinjaman")
-trv.heading(8, text="Jangka Waktu")
-trv.heading(9, text="Resiko Kredit")
-trv.heading(10, text="Bagi Hasil")
-trv.heading(11, text="Pokok")
-trv.heading(12, text="Terima Bersih")
+    style = ttk.Style()
+    style.theme_use("clam")
 
-trv.column(0, stretch=NO, width=0)
-trv.column(1, width=5, minwidth=70, anchor=CENTER)
-trv.column(2, width=86, minwidth=120, anchor=CENTER)
-trv.column(3, width=82, minwidth=120, anchor=CENTER)
-trv.column(4, width=82, minwidth=120, anchor=CENTER)
-trv.column(5, width=78, minwidth=120, anchor=CENTER)
-trv.column(6, width=84, minwidth=120, anchor=CENTER)
-trv.column(7, width=106, minwidth=120, anchor=CENTER)
-trv.column(8, width=76, minwidth=120, anchor=CENTER)
-trv.column(9, width=85, minwidth=120, anchor=CENTER)
-trv.column(10, width=85, minwidth=120, anchor=CENTER)
-trv.column(11, width=60, minwidth=120, anchor=CENTER)
-trv.column(12, width=80, minwidth=120, anchor=CENTER)
+    trv.grid(row=0, column=0, sticky="nsew")
+    # trv.pack(side=RIGHT, fill=BOTH, expand=True)
+    # trv.pack(side=RIGHT)
+    # trv.place(x=0, y=0)
 
+    for i, header in enumerate(headers):
+        trv.heading(columns[i], text=header)
 
-# Frame 2 - Tampilkan per Jumlah Pinjaman
-trv2 = ttk.Treeview(frame2, column=(0, 1, 2, 3, 4, 5),
-                    show="headings", height=12)
+    for i, width in enumerate(widths):
+        trv.column(columns[i], width=width, minwidth=width, anchor=CENTER)
+    
+    if bind_function:
+        trv.bind('<Double 1>', bind_function)
 
-trv2.pack(side=RIGHT)
-trv2.place(x=0, y=0)
+    # Exclude the first column from being displayed
+    trv["displaycolumns"] = columns[1:]
 
-trv2.heading(0, text="Id")
-trv2.heading(1, text="No")
-trv2.heading(2, text="Nama")
-trv2.heading(3, text="Puskesmas")
-trv2.heading(4, text="Tanggal Realisasi")
-trv2.heading(5, text="Jumlah Pinjaman")
+    scrollbar_y = Scrollbar(frame, orient="vertical", command=trv.yview)
+    scrollbar_y.grid(row=0, column=1, sticky="ns")
+    trv.configure(yscrollcommand=scrollbar_y.set)
 
-trv2.column(0, stretch=NO, width=0)
-trv2.column(1, width=5, minwidth=70, anchor=CENTER)
-trv2.column(2, width=80, minwidth=120, anchor=CENTER)
-trv2.column(3, width=80, minwidth=120, anchor=CENTER)
-trv2.column(4, width=80, minwidth=120, anchor=CENTER)
-trv2.column(5, width=80, minwidth=120, anchor=CENTER)
-trv2.column(5, width=120, minwidth=120, anchor=CENTER)
+    scrollbar_x = Scrollbar(frame, orient="horizontal", command=trv.xview)
+    scrollbar_x.grid(row=1, column=0, sticky="ew")
+    trv.configure(xscrollcommand=scrollbar_x.set)
+
+    return trv
+
+# penerapan untuk tampilkan data semua
+columns_trv = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+headers_trv = ("Id", "No", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah", "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih")
+widths_trv = (0, 70, 120, 120, 120, 100, 120, 100, 120, 120, 100, 100)
+
+trv = create_treview(frame1, columns_trv, headers_trv, widths_trv, bind_function=getrow)
+
+# penerapan untuk tampilkan data per Jumlah Pinjaman
+column_trv2 = (0, 1, 2, 3, 4, 5)
+headers_trv2 = ("Id", "No", "Nama", "Puskesmas", "Tanggal Realisasi", "Jumlah Pinjaman")
+widths_trv2 = (0, 70, 120, 120, 120, 120)
+
+trv2 = create_treview(frame2, column_trv2, headers_trv2, widths_trv2, bind_function=getrow)
+
 
 # Frame 3 - Tampilkan per resiko kredit
 trv3 = ttk.Treeview(frame3, column=(0, 1, 2, 3), show="headings", height=12)
@@ -561,30 +549,9 @@ for i, width in enumerate(column_widths3):
 
 
 # fungsi untuk user klik 2x di trv
-trv.bind('<Double 1>', getrow)
-trv2.bind('<Double 1>', getrow)
+# trv.bind('<Double 1>', getrow)
+# trv2.bind('<Double 1>', getrow)
 trv3.bind('<Double 1>', getrow)
-
-# Membuat scroll bar untuk semua tabel
-yscrollbar = Scrollbar(frame1, orient="vertical", command=trv.yview)
-yscrollbar.pack(side=RIGHT, fill="y")
-
-xscrollbar = Scrollbar(frame1, orient="horizontal", command=trv.xview)
-xscrollbar.pack(side=BOTTOM, fill="x")
-
-trv.configure(yscrollcommand=yscrollbar.set, xscrollcommand=xscrollbar.set)
-
-# Always show the horizontal scrollbar
-trv.columnconfigure(0, weight=1)
-
-# Membuat scroll bar untuk Per Jumlah Pinjaman
-yscrollbar2 = Scrollbar(frame2, orient="vertical", command=trv2.yview)
-yscrollbar2.pack(side=RIGHT, fill="y")
-
-xscrollbar2 = Scrollbar(frame2, orient="horizontal", command=trv2.xview)
-xscrollbar2.pack(side=BOTTOM, fill="x")
-
-trv2.configure(yscrollcommand=yscrollbar2.set, xscrollcommand=xscrollbar2.set)
 
 
 if __name__ == '__main__':
