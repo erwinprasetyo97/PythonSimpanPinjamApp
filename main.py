@@ -67,6 +67,7 @@ def is_valid_date(date_str):
         return FALSE
 
 
+# query for display all data
 def select_all():
     query = "SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM LOANS"
     cursor.execute(query)
@@ -74,10 +75,34 @@ def select_all():
     update_trv(rows)
 
 
+# query for display data based "jumlah_pinjaman"
+def select_based_loans(event=None):
+    # Menentukan kolom yang ingin ditampilkan
+    columns_to_select = ['ID', 'NAMA', 'PUSKESMAS',
+                         'TIMESTAMP', 'JUMLAH_PINJAMAN']
+
+    # Membuat pernyataan SQL SELECT
+    query = f"SELECT {', '.join(columns_to_select)} FROM LOANS;"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+
+    # memanggil fungsi untuk memperbarui treeview di frame kedua
+    update_trv2(rows)
+
+
 def update_trv(rows):
     trv.delete(*trv.get_children())
     for idx, i in enumerate(rows, start=1):
         trv.insert('', 'end', values=(i[0], idx, *i[1:]))
+
+def update_trv2(data):
+    # Membersihkan isi treeviw sebelum memasukkan data baru
+    for row in trv2.get_children():
+        trv2.delete(row)
+    
+    # Memasukkan data baru ke dalam treeview
+    for i, row in enumerate(data, start=1):
+        trv2.insert("", "end", values=[i]+ list(row))
 
 
 def add_new():
@@ -142,6 +167,7 @@ def add_new():
             messagebox.showinfo("Info", "Data Berhasil ditambahkan !")
             print("Data added Succesfully.")
             select_all()
+            select_based_loans()
             clear_field()
 
     except Exception as e:
@@ -192,6 +218,7 @@ def update_data():
             conn.commit()
             clear_field()
             select_all()
+            select_based_loans()
 
             # show success message
             messagebox.showinfo("Info", "Data berhasil diperbarui.")
@@ -240,6 +267,7 @@ def delete_data():
             print("Success delete data")
             clear_field()
             select_all()
+            select_based_loans()
         else:
             return True
     except Exception as e:
@@ -310,7 +338,9 @@ frame5.pack(fill='both', expand=True)
 
 # Add Frames to notebook
 notebook.add(frame1, text='Semua')
+
 notebook.add(frame2, text='Per Jumlah Pinjaman')
+notebook.bind("<<NotebookTabChanged>>", select_based_loans)
 notebook.add(frame3, text='Per Resiko Kredit')
 notebook.add(frame4, text='Per Bagi Hasil')
 notebook.add(frame5, text='Per Sisa Pokok')
@@ -460,15 +490,16 @@ trv2.heading(5, text="Jumlah Pinjaman")
 
 trv2.column(0, stretch=NO, width=0)
 trv2.column(1, width=5, minwidth=70, anchor=CENTER)
-trv2.column(2, width=80 ,minwidth=120, anchor=CENTER)
-trv2.column(3, width=80 ,minwidth=120, anchor=CENTER)
-trv2.column(4, width=80 ,minwidth=120, anchor=CENTER)
-trv2.column(5, width=80 ,minwidth=120, anchor=CENTER)
-trv2.column(5, width=120 ,minwidth=120, anchor=CENTER)
+trv2.column(2, width=80, minwidth=120, anchor=CENTER)
+trv2.column(3, width=80, minwidth=120, anchor=CENTER)
+trv2.column(4, width=80, minwidth=120, anchor=CENTER)
+trv2.column(5, width=80, minwidth=120, anchor=CENTER)
+trv2.column(5, width=120, minwidth=120, anchor=CENTER)
 
 
 # fungsi untuk user klik 2x di trv
 trv.bind('<Double 1>', getrow)
+trv2.bind('<Double 1>', getrow)
 
 # Membuat scroll bar untuk semua tabel
 yscrollbar = Scrollbar(frame1, orient="vertical", command=trv.yview)
@@ -492,7 +523,6 @@ xscrollbar2.pack(side=BOTTOM, fill="x")
 trv2.configure(yscrollcommand=yscrollbar2.set, xscrollcommand=xscrollbar2.set)
 
 
-
 if __name__ == '__main__':
     root.title("Aplikasi Simpan Pinjam")
     root.geometry("1060x650")
@@ -502,3 +532,4 @@ if __name__ == '__main__':
     else:
         select_all()
     root.mainloop()
+    conn.close()
