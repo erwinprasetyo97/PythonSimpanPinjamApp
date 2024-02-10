@@ -7,7 +7,8 @@ from tkinter import messagebox
 from datetime import datetime
 import pandas as pd
 from tkinter import filedialog
-from datetime import datetime, timezone
+from datetime import datetime
+from tkinter.ttk import Notebook, Style
 
 
 root = Tk()
@@ -69,10 +70,15 @@ def is_valid_date(date_str):
 
 # query for display all data
 def select_all():
-    query = "SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM LOANS"
-    cursor.execute(query)
-    rows = cursor.fetchall()
-    update_trv(rows)
+    try:
+        # Menentukan kolom yang ingin ditampilkan
+        query = "SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM LOANS"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        update_trv(rows)
+
+    except Exception as e:
+        print("Error fetching data:", e)
 
 
 # query for display data based "jumlah_pinjaman"
@@ -140,10 +146,14 @@ def select_based_pokok(event=None):
         print("Error fetching data:", e)
 
 # function untuk update treeview pada semua data
-def update_trv(rows):
-    trv.delete(*trv.get_children())
-    for idx, i in enumerate(rows, start=1):
-        trv.insert('', 'end', values=(i[0], idx, *i[1:]))
+def update_trv(data):
+    # Membersihkan isi treeviw sebelum memasukkan data baru
+    for row in trv.get_children():
+        trv.delete(row)
+
+    # Memasukkan data baru ke dalam treeview
+    for i, row in enumerate(data, start=1):
+        trv.insert("", "end", values=[i] + list(row))
 
 # function untuk update treeview pada
 def update_trv2(data):
@@ -427,7 +437,7 @@ def notebook_event(event):
         select_based_profit_sharing()
     elif current_tab == 4:
         select_based_pokok()
-
+  
 
 # Wrapper
 wrapperPencarian = LabelFrame(root, text="Pencarian")
@@ -440,7 +450,9 @@ frame3 = ttk.Frame(notebook, width=400, height=280)
 frame4 = ttk.Frame(notebook, width=400, height=280)
 frame5 = ttk.Frame(notebook, width=400, height=280)
 
-frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
+# frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
+frame1.grid_rowconfigure(0, weight=1, minsize=100)
+frame1.grid_columnconfigure(0, weight=1, minsize=100)
 frame2.grid(row=0, column=0, sticky="nsew")
 frame3.grid(row=0, column=0, sticky="nsew")
 frame4.grid(row=0, column=0, sticky="nsew")
@@ -544,18 +556,27 @@ cbtn = Button(wrapperPencarian, text="Clear", command=clear)
 cbtn.pack(side=LEFT, padx=6)
 
 # Function untuk create treeview
-
-
 def create_treview(frame, columns, headers, widths, bind_function=None):
     trv = ttk.Treeview(frame, column=columns, show="headings", height=12)
 
-    style = ttk.Style()
-    style.theme_use("clam")
+    Mysky = "#DCF0F2"
+    Myyellow = "#F2C84B"
+
+    style = Style()
+
+    # Check if theme "dummy" already exists
+    existing_themes = style.theme_names()
+    if "dummy" not in existing_themes:
+        style.theme_create("dummy", parent="alt", settings={
+            "TNotebook": {"configure": {"tabmargins": [2, 5, 2, 0]}},
+            "TNotebook.Tab": {
+                "configure": {"padding": [5, 1], "background": Mysky},
+                "map": {"background": [("selected", Myyellow)],
+                        "expand": [("selected", [1, 1, 1, 0])]}}})
+
+    style.theme_use("dummy")
 
     trv.grid(row=0, column=0, sticky="nsew")
-    # trv.pack(side=RIGHT, fill=BOTH, expand=True)
-    # trv.pack(side=RIGHT)
-    # trv.place(x=0, y=0)
 
     for i, header in enumerate(headers):
         trv.heading(columns[i], text=header)
@@ -586,8 +607,11 @@ headers_trv = ("Id", "No", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat 
                "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih")
 widths_trv = (0, 70, 120, 120, 120, 100, 120, 100, 120, 120, 100, 100)
 
+    
 trv = create_treview(frame1, columns_trv, headers_trv,
                      widths_trv, bind_function=getrow)
+
+trv.column("#12", anchor=CENTER)
 
 # penerapan untuk tampilkan data per Jumlah Pinjaman
 column_trv2 = (0, 1, 2, 3, 4, 5)
@@ -601,7 +625,7 @@ trv2 = create_treview(frame2, column_trv2, headers_trv2,
 # penerapan untuk tampilkan data per resiko kredit
 column_trv3 = (0, 1, 2, 3, 4)
 headers_trv3 = ("Id", "No", "Nama", "Puskesmas", "Resiko Kredit")
-widths_trv3 = (0, 70, 120, 120, 120)
+widths_trv3 = (0, 70, 120, 120, 200)
 
 trv3 = create_treview(frame3, column_trv3, headers_trv3,
                       widths_trv3, bind_function=getrow)
@@ -609,7 +633,7 @@ trv3 = create_treview(frame3, column_trv3, headers_trv3,
 # penerapan untuk tampilkan data per bagi hasil
 column_trv4 = (0, 1, 2, 3, 4)
 headers_trv4 = ("Id", "No", "Nama", "Puskesmas", "Bagi Hasil")
-widths_trv4 = (0, 70, 120, 120, 120)
+widths_trv4 = (0, 70, 120, 120, 200)
 
 trv4 = create_treview(frame4, column_trv4, headers_trv4,
                       widths_trv4, bind_function=getrow)
@@ -617,7 +641,7 @@ trv4 = create_treview(frame4, column_trv4, headers_trv4,
 # penerapan untuk tampilkan data per Sisa Pokok
 column_trv5 = (0, 1, 2, 3, 4)
 headers_trv5 = ("Id", "No", "Nama", "Puskesmas", "Pokok")
-widths_trv5 = (0, 70, 120, 120, 120)
+widths_trv5 = (0, 70, 120, 120, 200)
 
 trv5 = create_treview(frame5, column_trv5, headers_trv5, widths_trv5, bind_function=getrow)
 
