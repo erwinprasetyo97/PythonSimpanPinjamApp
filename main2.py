@@ -7,7 +7,8 @@ from tkinter import messagebox
 from datetime import datetime
 import pandas as pd
 from tkinter import filedialog
-from datetime import datetime, timezone
+from datetime import datetime
+from tkinter.ttk import Notebook, Style
 
 
 root = Tk()
@@ -24,9 +25,9 @@ def create_table():
     # Menonaktifkan pengecekan kunci asing
     cursor.execute("PRAGMA foreign_keys=off")
     cursor.execute("PRAGMA timezone = 'Asia/Jakarta'")
-    cursor.execute("DROP TABLE IF EXISTS LOANS")
+    cursor.execute("DROP TABLE IF EXISTS BORROW")
     query = """
-    CREATE TABLE LOANS(
+    CREATE TABLE BORROW(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         NAMA TEXT NOT NULL,
         NIP INTEGER NOT NULL,
@@ -69,20 +70,26 @@ def is_valid_date(date_str):
 
 # query for display all data
 def select_all():
-    query = "SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM LOANS"
-    cursor.execute(query)
-    rows = cursor.fetchall()
-    update_trv(rows)
+    try:
+        # Menentukan kolom yang ingin ditampilkan
+        query = "SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM BORROW"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        update_trv(rows)
+
+    except Exception as e:
+        print("Error fetching data:", e)
 
 
 # query for display data based "jumlah_pinjaman"
 def select_based_loans(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
-        columns_to_select = ['ID', 'NAMA', 'PUSKESMAS', 'TIMESTAMP', 'JUMLAH_PINJAMAN']
+        columns_to_select = ['ID', 'NAMA', 'PUSKESMAS',
+                             'TIMESTAMP', 'JUMLAH_PINJAMAN']
 
         # Membuat pernyataan SQL SELECT
-        query = f"SELECT {', '.join(columns_to_select)} FROM LOANS;"
+        query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -92,29 +99,63 @@ def select_based_loans(event=None):
 
 # query for display data based "Resiko Kredit"
 def select_based_credit_risk(event=None):
-    try :
+    try:
         # Menentukan kolom yang ingin ditampilkan
         columns_to_select = ['ID', 'NAMA', 'PUSKESMAS', 'RESIKO_KREDIT']
 
         # Membuat pernyataan SQL SELECT
-        query = f"SELECT {', '.join(columns_to_select)} FROM LOANS;"
+        query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
         cursor.execute(query)
         rows = cursor.fetchall()
 
-        # print("Data Credit Risk : ", rows)
         update_trv3(rows)
-    
+
     except Exception as e:
         print("Error fetching data:", e)
 
+# query for display data based "Bagi Hasil"
+def select_based_profit_sharing(event=None):
+    try:
+        # Menentukan kolom yang ingin ditampilkan
+        columns_to_select = ['ID', 'NAMA', 'PUSKESMAS', 'BAGI_HASIL']
+
+        # membuat pernyataan SQL SELECT
+        query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        update_trv4(rows)
+
+    except Exception as e:
+        print("Error fetching data:", e)
+
+# query for display data based "Pokok"
+def select_based_pokok(event=None):
+    try:
+        # Menentukan kolom yang ingin ditampilkan
+        columns_to_select = ['ID', 'NAMA', 'PUSKESMAS', 'POKOK']
+
+        # membuat pernyataan SQL SELECT
+        query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        update_trv5(rows)
+
+    except Exception as e:
+        print("Error fetching data:", e)
 
 # function untuk update treeview pada semua data
-def update_trv(rows):
-    trv.delete(*trv.get_children())
-    for idx, i in enumerate(rows, start=1):
-        trv.insert('', 'end', values=(i[0], idx, *i[1:]))
+def update_trv(data):
+    # Membersihkan isi treeviw sebelum memasukkan data baru
+    for row in trv.get_children():
+        trv.delete(row)
 
-# function untuk update treeview pada 
+    # Memasukkan data baru ke dalam treeview
+    for i, row in enumerate(data, start=1):
+        trv.insert("", "end", values=[i] + list(row))
+
+# function untuk update treeview pada
 def update_trv2(data):
     # Membersihkan isi treeviw sebelum memasukkan data baru
     for row in trv2.get_children():
@@ -124,15 +165,36 @@ def update_trv2(data):
     for i, row in enumerate(data, start=1):
         trv2.insert("", "end", values=[i] + list(row))
 
-# function untuk update treeview pada 
+# function untuk update treeview pada
 def update_trv3(data):
     # Membersihkan isi treeviw sebelum memasukkan data baru
     for row in trv3.get_children():
         trv3.delete(row)
 
     # Memasukkan data baru ke dalam treeview
-    for row in data:
-        trv3.insert("", "end", values=row)
+    for i, row in enumerate(data, start=1):
+        trv3.insert("", "end", values=[i] + list(row))
+
+# function untuk update treview berdasarkan bagi hasil
+def update_trv4(data):
+    # membersihkan isi treeview sebelum memasukkan data baru
+    for row in trv4.get_children():
+        trv4.delete(row)
+
+    # memasukkan data baru ke dalam treeview
+    for i, row in enumerate(data, start=1):
+        trv4.insert("", "end", values=[i] + list(row))
+
+# function untuk update treeview berdasarkan pokok
+def update_trv5(data):
+    # membersihkan isi treeview sebelum memasukkan data baru
+    for row in trv5.get_children():
+        trv5.delete(row)
+
+    # memasukkan data baru ke dalam treeview
+    for i, row in enumerate(data, start=1):
+        trv5.insert("", "end", values=[i] + list(row))
+
 
 def add_new():
     try:
@@ -174,7 +236,7 @@ def add_new():
         if confirm == 'yes':
             # Jika user menekan Yes, Simpan data ke database
             query = """
-                INSERT INTO LOANS
+                INSERT INTO BORROW
                 (NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH, TIMESTAMP)
                 values (:NAMA, :NIP, :PUSKESMAS, :TANGGAL_LAHIR, :ALAMAT, :JUMLAH_PINJAMAN, :JANGKA_WAKTU, :RESIKO_KREDIT, :BAGI_HASIL, :POKOK, :TERIMA_BERSIH, CURRENT_TIMESTAMP)
                 """
@@ -198,6 +260,8 @@ def add_new():
             select_all()
             select_based_loans()
             select_based_credit_risk()
+            select_based_profit_sharing()
+            select_based_pokok()
             clear_field()
 
     except Exception as e:
@@ -230,8 +294,8 @@ def update_data():
                 return
 
             query = """ 
-                UPDATE LOANS
-                SET NAMA=?, NIP=?, PUSKESMAS=?, ALAMAT=?, TANGGAL_LAHIR=?, JUMLAH_PINJAMAN=?, JANGKA_WAKTU=?, URAIAN=? WHERE ID=?
+                UPDATE BORROW
+                SET NAMA=?, NIP=?, PUSKESMAS=?, ALAMAT=?, TANGGAL_LAHIR=?, JUMLAH_PINJAMAN=?, JANGKA_WAKTU=? WHERE ID=?
             """
             params = (
                 v_nama.get(),
@@ -241,7 +305,6 @@ def update_data():
                 v_tanggal_lahir.get(),
                 v_jumlah_pinjaman.get(),
                 v_jangka_waktu.get(),
-                v_uraian.get(),
                 v_id.get()
             )
             cursor.execute(query, params)
@@ -250,6 +313,8 @@ def update_data():
             select_all()
             select_based_loans()
             select_based_credit_risk()
+            select_based_profit_sharing()
+            select_based_pokok()
 
             # show success message
             messagebox.showinfo("Info", "Data berhasil diperbarui.")
@@ -262,6 +327,7 @@ def update_data():
 
 
 def getrow(event):
+
     rowid = trv.identify_row(event.y)
     item = trv.item(rowid)
 
@@ -274,6 +340,7 @@ def getrow(event):
         v_alamat_rumah.set(item['values'][6])
         v_jumlah_pinjaman.set(item['values'][7])
         v_jangka_waktu.set(item['values'][8])
+
     else:
         print("Error: Insufficient values in the 'values atribute.")
 
@@ -292,7 +359,7 @@ def delete_data():
     try:
         id = v_id.get()
         if (messagebox.askyesno("Konfirmasi Hapus?", "Apakah yakin ingin menghapus data ini ?")):
-            query = "DELETE FROM LOANS WHERE ID = {}".format(id)
+            query = "DELETE FROM BORROW WHERE ID = {}".format(id)
             cursor.execute(query)
             conn.commit()
             print("Success delete data")
@@ -300,6 +367,8 @@ def delete_data():
             select_all()
             select_based_loans()
             select_based_credit_risk()
+            select_based_profit_sharing()
+            select_based_pokok()
         else:
             return True
     except Exception as e:
@@ -315,13 +384,13 @@ def export_data():
 
         if file_path:
             # Mengambil data dari database
-            query = "SELECT * FROM LOANS"
+            query = "SELECT * FROM BORROW"
             cursor.execute(query)
             rows = cursor.fetchall()
 
         # Membuat DataFrame dari data
         df = pd.DataFrame(rows, columns=[
-            'ID', 'NAMA', 'NIP', 'PUSKESMAS', 'TANGGAL_LAHIR', 'ALAMAT', 'JUMLAH_PINJAMAN', 'JANGKA_WAKTU', 'RESIKO_KREDIT', 'BAGI_HASIL', 'POKOK', 'TERIMA_BERSIH', 'URAIAN'
+            'ID', 'NAMA', 'NIP', 'PUSKESMAS', 'TANGGAL_LAHIR', 'ALAMAT', 'JUMLAH_PINJAMAN', 'JANGKA_WAKTU', 'RESIKO_KREDIT', 'BAGI_HASIL', 'POKOK', 'TERIMA_BERSIH'
         ])
 
         # Menyimpan DataFrame ke file Excel
@@ -336,16 +405,24 @@ def export_data():
 
 
 def search():
-    q2 = q.get()
-    query = """
-    SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM LOANS WHERE NAMA LIKE {} OR NIP LIKE {}
-    """.format("'%"+q2+"%'", "'%"+q2+"%'")
-    cursor.execute(query)
-    conn.commit()
-    rows = cursor.fetchall()
-    update_trv(rows)
-    update_trv2(rows)
-    update_trv3(rows)
+    try:
+        q2 = q.get()
+        query = """
+        SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM BORROW WHERE NAMA LIKE {} OR NIP LIKE {}
+        """.format("'%"+q2+"%'", "'%"+q2+"%'")
+        cursor.execute(query)
+        conn.commit()
+        rows = cursor.fetchall()
+        update_trv(rows)
+        update_trv2(rows)
+        update_trv3(rows)
+        update_trv4(rows)
+        update_trv5(rows)
+    except Exception as e:
+        print("Error :", e)
+        messagebox.showerror(
+            "Error", "Terjadi Kesalahan saat pencarian data"
+        )
 
 
 def clear():
@@ -354,15 +431,21 @@ def clear():
     select_all()
     select_based_loans()
     select_based_credit_risk()
+    select_based_profit_sharing()
+    select_based_pokok()
 
-# untuk mengecek notebook yang aktif
+# untuk mengecek notebook yang aktif 
 def notebook_event(event):
     current_tab = notebook.index(notebook.select())
     if current_tab == 1:
         select_based_loans()
     elif current_tab == 2:
         select_based_credit_risk()
-
+    elif current_tab == 3:
+        select_based_profit_sharing()
+    elif current_tab == 4:
+        select_based_pokok()
+  
 
 # Wrapper
 wrapperPencarian = LabelFrame(root, text="Pencarian")
@@ -375,7 +458,9 @@ frame3 = ttk.Frame(notebook, width=400, height=280)
 frame4 = ttk.Frame(notebook, width=400, height=280)
 frame5 = ttk.Frame(notebook, width=400, height=280)
 
-frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
+# frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
+frame1.grid_rowconfigure(0, weight=1, minsize=100)
+frame1.grid_columnconfigure(0, weight=1, minsize=100)
 frame2.grid(row=0, column=0, sticky="nsew")
 frame3.grid(row=0, column=0, sticky="nsew")
 frame4.grid(row=0, column=0, sticky="nsew")
@@ -389,6 +474,7 @@ notebook.add(frame4, text='Per Bagi Hasil')
 notebook.add(frame5, text='Per Sisa Pokok')
 
 notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
+
 # Posisi Wrapper
 wrapperPencarian.pack(fill="both", padx=20, pady=10)
 wrapperDataPeminjam.pack(fill="both", padx=20, pady=10)
@@ -402,7 +488,6 @@ v_tanggal_lahir = StringVar()
 v_alamat_rumah = StringVar()
 v_jumlah_pinjaman = IntVar()
 v_jangka_waktu = IntVar()
-v_uraian = StringVar()
 
 # Frame untuk Form di Wrapper 3
 form_frame = ttk.Frame(wrapperDataPeminjam, padding="5")
@@ -479,23 +564,20 @@ cbtn = Button(wrapperPencarian, text="Clear", command=clear)
 cbtn.pack(side=LEFT, padx=6)
 
 # Function untuk create treeview
-def create_treview(frame, columns, headers, widths, bind_function=None):
+def create_treview(frame, columns, headers, widths, bind_function=None, Mysky=None):
+    create_tab_notebook()
     trv = ttk.Treeview(frame, column=columns, show="headings", height=12)
-
-    style = ttk.Style()
-    style.theme_use("clam")
+    
+    trv.tag_configure("header", background=Mysky)
 
     trv.grid(row=0, column=0, sticky="nsew")
-    # trv.pack(side=RIGHT, fill=BOTH, expand=True)
-    # trv.pack(side=RIGHT)
-    # trv.place(x=0, y=0)
 
     for i, header in enumerate(headers):
         trv.heading(columns[i], text=header)
 
     for i, width in enumerate(widths):
         trv.column(columns[i], width=width, minwidth=width, anchor=CENTER)
-    
+
     if bind_function:
         trv.bind('<Double 1>', bind_function)
 
@@ -512,53 +594,60 @@ def create_treview(frame, columns, headers, widths, bind_function=None):
 
     return trv
 
+def create_tab_notebook():
+    style = Style()
+    style.theme_use("clam")
+
 # penerapan untuk tampilkan data semua
 columns_trv = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
-headers_trv = ("Id", "No", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah", "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih")
+headers_trv = ("Id", "No", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah",
+               "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih")
 widths_trv = (0, 70, 120, 120, 120, 100, 120, 100, 120, 120, 100, 100)
 
-trv = create_treview(frame1, columns_trv, headers_trv, widths_trv, bind_function=getrow)
+    
+trv = create_treview(frame1, columns_trv, headers_trv,
+                     widths_trv, bind_function=getrow)
+
+trv.column("#12", anchor=CENTER)
 
 # penerapan untuk tampilkan data per Jumlah Pinjaman
-column_trv2 = (0, 1, 2, 3, 4, 5)
-headers_trv2 = ("Id", "No", "Nama", "Puskesmas", "Tanggal Realisasi", "Jumlah Pinjaman")
+column_trv2 = (0, 1, 2, 3, 4, 5) 
+headers_trv2 = ("Id", "No", "Nama", "Puskesmas",
+                "Tanggal Realisasi", "Jumlah Pinjaman")
 widths_trv2 = (0, 70, 120, 120, 120, 120)
 
-trv2 = create_treview(frame2, column_trv2, headers_trv2, widths_trv2, bind_function=getrow)
+trv2 = create_treview(frame2, column_trv2, headers_trv2,
+                      widths_trv2, bind_function=getrow)
 
+# penerapan untuk tampilkan data per resiko kredit
+column_trv3 = (0, 1, 2, 3, 4)
+headers_trv3 = ("Id", "No", "Nama", "Puskesmas", "Resiko Kredit")
+widths_trv3 = (0, 70, 120, 120, 200)
 
-# Frame 3 - Tampilkan per resiko kredit
-trv3 = ttk.Treeview(frame3, column=(0, 1, 2, 3), show="headings", height=12)
+trv3 = create_treview(frame3, column_trv3, headers_trv3,
+                      widths_trv3, bind_function=getrow)
 
-trv3.pack(side=RIGHT)
-trv3.place(x=0, y=0)
+# penerapan untuk tampilkan data per bagi hasil
+column_trv4 = (0, 1, 2, 3, 4)
+headers_trv4 = ("Id", "No", "Nama", "Puskesmas", "Bagi Hasil")
+widths_trv4 = (0, 70, 120, 120, 200)
 
-column_headers3 = ["No", "Nama", "Puskesmas", "Resiko Kredit"]
-column_widths3 = [70, 120, 120, 200]
+trv4 = create_treview(frame4, column_trv4, headers_trv4,
+                      widths_trv4, bind_function=getrow)
 
-# memastikan jumlah kolom susuai dengan panjang column_headers dan column_widths
-assert len(column_headers3) == len(trv3["column"])
+# penerapan untuk tampilkan data per Sisa Pokok
+column_trv5 = (0, 1, 2, 3, 4)
+headers_trv5 = ("Id", "No", "Nama", "Puskesmas", "Pokok")
+widths_trv5 = (0, 70, 120, 120, 200)
 
-for i, header in enumerate(column_headers3):
-    trv3.heading(i, text=header)
-
-for i, width in enumerate(column_widths3):
-    # Memastikan indeks kolom tidak melebihi jumlah kolom yang telah didefinisikan
-    if i < len(trv3["column"]):
-        trv3.column(i, width=width, anchor=CENTER)
-
-
-# fungsi untuk user klik 2x di trv
-# trv.bind('<Double 1>', getrow)
-# trv2.bind('<Double 1>', getrow)
-trv3.bind('<Double 1>', getrow)
+trv5 = create_treview(frame5, column_trv5, headers_trv5, widths_trv5, bind_function=getrow)
 
 
 if __name__ == '__main__':
     root.title("Aplikasi Simpan Pinjam")
     root.geometry("1060x650")
     root.resizable(FALSE, FALSE)
-    if (isFirst("LOANS")):
+    if (isFirst("BORROW")):
         create_table()
     else:
         select_all()

@@ -25,9 +25,9 @@ def create_table():
     # Menonaktifkan pengecekan kunci asing
     cursor.execute("PRAGMA foreign_keys=off")
     cursor.execute("PRAGMA timezone = 'Asia/Jakarta'")
-    cursor.execute("DROP TABLE IF EXISTS LOANS")
+    cursor.execute("DROP TABLE IF EXISTS BORROW")
     query = """
-    CREATE TABLE LOANS(
+    CREATE TABLE BORROW(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         NAMA TEXT NOT NULL,
         NIP INTEGER NOT NULL,
@@ -72,7 +72,7 @@ def is_valid_date(date_str):
 def select_all():
     try:
         # Menentukan kolom yang ingin ditampilkan
-        query = "SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM LOANS"
+        query = "SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM BORROW"
         cursor.execute(query)
         rows = cursor.fetchall()
         update_trv(rows)
@@ -89,7 +89,7 @@ def select_based_loans(event=None):
                              'TIMESTAMP', 'JUMLAH_PINJAMAN']
 
         # Membuat pernyataan SQL SELECT
-        query = f"SELECT {', '.join(columns_to_select)} FROM LOANS;"
+        query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -104,7 +104,7 @@ def select_based_credit_risk(event=None):
         columns_to_select = ['ID', 'NAMA', 'PUSKESMAS', 'RESIKO_KREDIT']
 
         # Membuat pernyataan SQL SELECT
-        query = f"SELECT {', '.join(columns_to_select)} FROM LOANS;"
+        query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -120,7 +120,7 @@ def select_based_profit_sharing(event=None):
         columns_to_select = ['ID', 'NAMA', 'PUSKESMAS', 'BAGI_HASIL']
 
         # membuat pernyataan SQL SELECT
-        query = f"SELECT {', '.join(columns_to_select)} FROM LOANS;"
+        query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -136,7 +136,7 @@ def select_based_pokok(event=None):
         columns_to_select = ['ID', 'NAMA', 'PUSKESMAS', 'POKOK']
 
         # membuat pernyataan SQL SELECT
-        query = f"SELECT {', '.join(columns_to_select)} FROM LOANS;"
+        query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -236,7 +236,7 @@ def add_new():
         if confirm == 'yes':
             # Jika user menekan Yes, Simpan data ke database
             query = """
-                INSERT INTO LOANS
+                INSERT INTO BORROW
                 (NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH, TIMESTAMP)
                 values (:NAMA, :NIP, :PUSKESMAS, :TANGGAL_LAHIR, :ALAMAT, :JUMLAH_PINJAMAN, :JANGKA_WAKTU, :RESIKO_KREDIT, :BAGI_HASIL, :POKOK, :TERIMA_BERSIH, CURRENT_TIMESTAMP)
                 """
@@ -294,7 +294,7 @@ def update_data():
                 return
 
             query = """ 
-                UPDATE LOANS
+                UPDATE BORROW
                 SET NAMA=?, NIP=?, PUSKESMAS=?, ALAMAT=?, TANGGAL_LAHIR=?, JUMLAH_PINJAMAN=?, JANGKA_WAKTU=? WHERE ID=?
             """
             params = (
@@ -357,7 +357,7 @@ def delete_data():
     try:
         id = v_id.get()
         if (messagebox.askyesno("Konfirmasi Hapus?", "Apakah yakin ingin menghapus data ini ?")):
-            query = "DELETE FROM LOANS WHERE ID = {}".format(id)
+            query = "DELETE FROM BORROW WHERE ID = {}".format(id)
             cursor.execute(query)
             conn.commit()
             print("Success delete data")
@@ -382,7 +382,7 @@ def export_data():
 
         if file_path:
             # Mengambil data dari database
-            query = "SELECT * FROM LOANS"
+            query = "SELECT * FROM BORROW"
             cursor.execute(query)
             rows = cursor.fetchall()
 
@@ -405,7 +405,7 @@ def export_data():
 def search():
     q2 = q.get()
     query = """
-    SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM LOANS WHERE NAMA LIKE {} OR NIP LIKE {}
+    SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM BORROW WHERE NAMA LIKE {} OR NIP LIKE {}
     """.format("'%"+q2+"%'", "'%"+q2+"%'")
     cursor.execute(query)
     conn.commit()
@@ -576,6 +576,9 @@ def create_treview(frame, columns, headers, widths, bind_function=None):
 
     style.theme_use("dummy")
 
+    # Configure the "header" tag with the background color for the headaer
+    trv.tag_configure("header", background=Mysky)
+    
     trv.grid(row=0, column=0, sticky="nsew")
 
     for i, header in enumerate(headers):
@@ -650,7 +653,7 @@ if __name__ == '__main__':
     root.title("Aplikasi Simpan Pinjam")
     root.geometry("1060x650")
     root.resizable(FALSE, FALSE)
-    if (isFirst("LOANS")):
+    if (isFirst("BORROW")):
         create_table()
     else:
         select_all()

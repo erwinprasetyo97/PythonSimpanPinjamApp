@@ -1,26 +1,42 @@
 import tkinter as tk
 from tkinter import ttk
 
-# root window
+Myblue = "#DCF0F2"
+Myyellow = "#F2C84B"
+
+def on_treeview_click(event):
+    item = treeview.identify_row(event.y)
+    column = treeview.identify_column(event.x)
+    
+    # Change background color when a specific column is clicked
+    if column == "#0":  # Replace "#0" with the actual identifier of the desired column
+        treeview.tag_configure("clicked", background=Myyellow)
+        treeview.item(item, tags=("clicked",))
+
+# Create a Tkinter window
 root = tk.Tk()
-root.geometry('400x300')
-root.title('Notebook Demo')
+root.geometry("500x300")
 
-# create a notebook
-notebook = ttk.Notebook(root)
-notebook.pack(pady=10, expand=True)
+# Create a Treeview widget
+treeview = ttk.Treeview(root)
+treeview["columns"] = ("Name", "Age", "Gender")
 
-# create frames
-frame1 = ttk.Frame(notebook, width=1000, height=280)
-frame2 = ttk.Frame(notebook, width=400, height=280)
+# Configure column headings
+treeview.heading("#0", text="ID")
+treeview.heading("Name", text="Name")
+treeview.heading("Age", text="Age")
+treeview.heading("Gender", text="Gender")
 
-frame1.pack(fill='both', expand=True)
-frame2.pack(fill='both', expand=True)
+# Add sample data to the Treeview
+for i in range(1, 11):
+    treeview.insert("", "end", values=(f"Item {i}", f"{20 + i}", "Male"))
 
-# add frames to notebook
+# Bind the click event to the Treeview
+treeview.bind("<ButtonRelease-1>", on_treeview_click)
 
-notebook.add(frame1, text='General Information')
-notebook.add(frame2, text='Profile')
+# Apply style to Treeview
+style = ttk.Style()
+style.configure("Treeview", background=Myblue)
 
-
+# Run the Tkinter event loop
 root.mainloop()
