@@ -327,6 +327,7 @@ def update_data():
 
 
 def getrow(event):
+
     rowid = trv.identify_row(event.y)
     item = trv.item(rowid)
 
@@ -339,6 +340,7 @@ def getrow(event):
         v_alamat_rumah.set(item['values'][6])
         v_jumlah_pinjaman.set(item['values'][7])
         v_jangka_waktu.set(item['values'][8])
+
     else:
         print("Error: Insufficient values in the 'values atribute.")
 
@@ -403,18 +405,24 @@ def export_data():
 
 
 def search():
-    q2 = q.get()
-    query = """
-    SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM BORROW WHERE NAMA LIKE {} OR NIP LIKE {}
-    """.format("'%"+q2+"%'", "'%"+q2+"%'")
-    cursor.execute(query)
-    conn.commit()
-    rows = cursor.fetchall()
-    update_trv(rows)
-    update_trv2(rows)
-    update_trv3(rows)
-    update_trv4(rows)
-    update_trv5(rows)
+    try:
+        q2 = q.get()
+        query = """
+        SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM BORROW WHERE NAMA LIKE {} OR NIP LIKE {}
+        """.format("'%"+q2+"%'", "'%"+q2+"%'")
+        cursor.execute(query)
+        conn.commit()
+        rows = cursor.fetchall()
+        update_trv(rows)
+        update_trv2(rows)
+        update_trv3(rows)
+        update_trv4(rows)
+        update_trv5(rows)
+    except Exception as e:
+        print("Error :", e)
+        messagebox.showerror(
+            "Error", "Terjadi Kesalahan saat pencarian data"
+        )
 
 
 def clear():
@@ -556,29 +564,12 @@ cbtn = Button(wrapperPencarian, text="Clear", command=clear)
 cbtn.pack(side=LEFT, padx=6)
 
 # Function untuk create treeview
-def create_treview(frame, columns, headers, widths, bind_function=None):
+def create_treview(frame, columns, headers, widths, bind_function=None, Mysky=None):
+    create_tab_notebook()
     trv = ttk.Treeview(frame, column=columns, show="headings", height=12)
-
-    Mysky = "#DCF0F2"
-    Myyellow = "#F2C84B"
-
-    style = Style()
-
-    # Check if theme "dummy" already exists
-    existing_themes = style.theme_names()
-    if "dummy" not in existing_themes:
-        style.theme_create("dummy", parent="alt", settings={
-            "TNotebook": {"configure": {"tabmargins": [2, 5, 2, 0]}},
-            "TNotebook.Tab": {
-                "configure": {"padding": [5, 1], "background": Mysky},
-                "map": {"background": [("selected", Myyellow)],
-                        "expand": [("selected", [1, 1, 1, 0])]}}})
-
-    style.theme_use("dummy")
-
-    # Configure the "header" tag with the background color for the headaer
-    trv.tag_configure("header", background=Mysky)
     
+    trv.tag_configure("header", background=Mysky)
+
     trv.grid(row=0, column=0, sticky="nsew")
 
     for i, header in enumerate(headers):
@@ -603,6 +594,9 @@ def create_treview(frame, columns, headers, widths, bind_function=None):
 
     return trv
 
+def create_tab_notebook():
+    style = Style()
+    style.theme_use("clam")
 
 # penerapan untuk tampilkan data semua
 columns_trv = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
@@ -617,7 +611,7 @@ trv = create_treview(frame1, columns_trv, headers_trv,
 trv.column("#12", anchor=CENTER)
 
 # penerapan untuk tampilkan data per Jumlah Pinjaman
-column_trv2 = (0, 1, 2, 3, 4, 5)
+column_trv2 = (0, 1, 2, 3, 4, 5) 
 headers_trv2 = ("Id", "No", "Nama", "Puskesmas",
                 "Tanggal Realisasi", "Jumlah Pinjaman")
 widths_trv2 = (0, 70, 120, 120, 120, 120)
