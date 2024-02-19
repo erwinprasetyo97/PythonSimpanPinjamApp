@@ -482,8 +482,6 @@ def clear():
     select_based_pokok()
 
 # untuk mengecek notebook yang aktif
-
-
 def notebook_event(event):
     current_tab = notebook.index(notebook.select())
     if current_tab == 1:
@@ -508,6 +506,10 @@ frame3 = ttk.Frame(notebook, width=400, height=280)
 frame4 = ttk.Frame(notebook, width=400, height=280)
 frame5 = ttk.Frame(notebook, width=400, height=280)
 
+# frame untuk Data Peminjam
+frameDataPeminjam = ttk.Frame(notebook, width=400, height=280)
+frameDataSetor = ttk.Frame(notebook, width=400, height=280)
+
 # frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
 frame1.grid_rowconfigure(0, weight=1, minsize=100)
 frame1.grid_columnconfigure(0, weight=1, minsize=100)
@@ -516,7 +518,7 @@ frame3.grid(row=0, column=0, sticky="nsew")
 frame4.grid(row=0, column=0, sticky="nsew")
 frame5.grid(row=0, column=0, sticky="nsew")
 
-# Add Frames to notebook
+# Add Frames to notebook display data
 notebook.add(frame1, text='Semua')
 notebook.add(frame2, text='Per Jumlah Pinjaman')
 notebook.add(frame3, text='Per Resiko Kredit')
@@ -524,6 +526,10 @@ notebook.add(frame4, text='Per Bagi Hasil')
 notebook.add(frame5, text='Per Sisa Pokok')
 
 notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
+
+# Add Frame to notebook to input data from user
+notebook.add(frameDataPeminjam, text='Input Data Peminjam')
+notebook.add(frameDataSetor, text='Input Data Setoran')
 
 # Posisi Wrapper
 wrapperPencarian.pack(fill="both", padx=20, pady=10)
