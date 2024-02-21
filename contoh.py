@@ -1,42 +1,61 @@
 import tkinter as tk
 from tkinter import ttk
 
-Myblue = "#DCF0F2"
-Myyellow = "#F2C84B"
+def notebook_event(event):
+    current_tab = notebook.index(notebook.select())
+    if current_tab == 1:
+        select_based_loans()
+    elif current_tab == 2:
+        select_based_credit_risk()
+    elif current_tab == 3:
+        select_based_profit_sharing()
+    elif current_tab == 4:
+        select_based_pokok()
 
-def on_treeview_click(event):
-    item = treeview.identify_row(event.y)
-    column = treeview.identify_column(event.x)
-    
-    # Change background color when a specific column is clicked
-    if column == "#0":  # Replace "#0" with the actual identifier of the desired column
-        treeview.tag_configure("clicked", background=Myyellow)
-        treeview.item(item, tags=("clicked",))
-
-# Create a Tkinter window
 root = tk.Tk()
-root.geometry("500x300")
+root.title("Aplikasi Simpan Pinjam")
+root.geometry("1060x650")
+root.resizable(False, False)
 
-# Create a Treeview widget
-treeview = ttk.Treeview(root)
-treeview["columns"] = ("Name", "Age", "Gender")
+# Baris pertama: Notebook untuk menampilkan data
+notebook = ttk.Notebook(root)
+notebook.grid(row=0, column=0, sticky="nsew")
 
-# Configure column headings
-treeview.heading("#0", text="ID")
-treeview.heading("Name", text="Name")
-treeview.heading("Age", text="Age")
-treeview.heading("Gender", text="Gender")
+# ... (frame1, frame2, frame3, frame4, frame5)
 
-# Add sample data to the Treeview
-for i in range(1, 11):
-    treeview.insert("", "end", values=(f"Item {i}", f"{20 + i}", "Male"))
+# Add Frames to notebook display data
+notebook.add(frame1, text='Semua')
+notebook.add(frame2, text='Per Jumlah Pinjaman')
+notebook.add(frame3, text='Per Resiko Kredit')
+notebook.add(frame4, text='Per Bagi Hasil')
+notebook.add(frame5, text='Per Sisa Pokok')
 
-# Bind the click event to the Treeview
-treeview.bind("<ButtonRelease-1>", on_treeview_click)
+notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
 
-# Apply style to Treeview
-style = ttk.Style()
-style.configure("Treeview", background=Myblue)
+# Baris kedua: Notebook untuk pencarian
+search_notebook = ttk.Notebook(root)
+search_notebook.grid(row=1, column=0, sticky="nsew")
 
-# Run the Tkinter event loop
+search_frame1 = ttk.Frame(search_notebook, width=400, height=280)
+search_frame2 = ttk.Frame(search_notebook, width=400, height=280)
+# ... (tambahkan frame pencarian lainnya)
+
+search_notebook.add(search_frame1, text='Pencarian 1')
+search_notebook.add(search_frame2, text='Pencarian 2')
+# ... (tambahkan tab pencarian lainnya)
+
+# Baris ketiga: Notebook untuk inputan
+input_notebook = ttk.Notebook(root)
+input_notebook.grid(row=2, column=0, sticky="nsew")
+
+input_frame1 = ttk.Frame(input_notebook, width=400, height=280)
+input_frame2 = ttk.Frame(input_notebook, width=400, height=280)
+# ... (tambahkan frame input lainnya)
+
+input_notebook.add(input_frame1, text='Input Data Peminjam')
+input_notebook.add(input_frame2, text='Input Data Setoran')
+# ... (tambahkan tab input lainnya)
+
+# ...
+
 root.mainloop()

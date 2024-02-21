@@ -20,8 +20,10 @@ cursor = conn.cursor()
 notebook = ttk.Notebook(root)
 notebook.pack(fill="both", padx=20, pady=10)
 
+# membuat tabel borrow
 
-def create_table():
+
+def create_borrow_table():
     # Menonaktifkan pengecekan kunci asing
     cursor.execute("PRAGMA foreign_keys=off")
     cursor.execute("PRAGMA timezone = 'Asia/Jakarta'")
@@ -48,6 +50,28 @@ def create_table():
     cursor.execute("PRAGMA timezone = DEFAULT")
     conn.commit()
 
+# membuat table deposits
+def create_deposits_table():
+    cursor.execute("PRAGMA foreign_keys=off")
+    cursor.execute("PRAGMA timezone = 'Asia/Jakarta'")
+    cursor.execute("DROP TABLE IF EXISTS DEPOSITS")
+    query = """
+    CREATE TABLE DEPOSITS(
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        JUMLAH_SETOR INTEGER NOT NULL,
+        SELISIH INTEGER,
+        GAGAL_POTONG INTEGER,
+        TANGGAL_SETOR TEXT NOT NULL,
+        TIMESTAMP TIMESTAMP DEFAULT (datetime('now', 'localtime')),
+        BORROW_ID INTEGER,
+        FOREIGN KEY(BORROW_ID) REFERENCES BORROW(ID)
+    )
+    """
+    cursor.execute(query)
+    cursor.execute("PRAGMA foreign_keys=on")
+    cursor.execute("PRAGMA timezone = DEFAULT")
+    conn.commit()
+
 
 def isFirst(table_name):
     query = '''SELECT count(name) FROM sqlite_master WHERE type='table' AND name='{}' '''.format(
@@ -67,19 +91,17 @@ def is_valid_date(date_str):
     except ValueError:
         return FALSE
 
-
 # query for display all data
-def select_all():
+def select_all_borrow():
     try:
         # Menentukan kolom yang ingin ditampilkan
-        query = "SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM BORROW"
+        query = "SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH, TIMESTAMP FROM BORROW"
         cursor.execute(query)
         rows = cursor.fetchall()
         update_trv(rows)
 
     except Exception as e:
         print("Error fetching data:", e)
-
 
 # query for display data based "jumlah_pinjaman"
 def select_based_loans(event=None):
@@ -98,6 +120,8 @@ def select_based_loans(event=None):
         print("Error fetching data:", e)
 
 # query for display data based "Resiko Kredit"
+
+
 def select_based_credit_risk(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
@@ -114,6 +138,8 @@ def select_based_credit_risk(event=None):
         print("Error fetching data:", e)
 
 # query for display data based "Bagi Hasil"
+
+
 def select_based_profit_sharing(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
@@ -130,6 +156,8 @@ def select_based_profit_sharing(event=None):
         print("Error fetching data:", e)
 
 # query for display data based "Pokok"
+
+
 def select_based_pokok(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
@@ -146,6 +174,8 @@ def select_based_pokok(event=None):
         print("Error fetching data:", e)
 
 # function untuk update treeview pada semua data
+
+
 def update_trv(data):
     # Membersihkan isi treeviw sebelum memasukkan data baru
     for row in trv.get_children():
@@ -156,6 +186,8 @@ def update_trv(data):
         trv.insert("", "end", values=[i] + list(row))
 
 # function untuk update treeview pada
+
+
 def update_trv2(data):
     # Membersihkan isi treeviw sebelum memasukkan data baru
     for row in trv2.get_children():
@@ -166,6 +198,8 @@ def update_trv2(data):
         trv2.insert("", "end", values=[i] + list(row))
 
 # function untuk update treeview pada
+
+
 def update_trv3(data):
     # Membersihkan isi treeviw sebelum memasukkan data baru
     for row in trv3.get_children():
@@ -176,6 +210,8 @@ def update_trv3(data):
         trv3.insert("", "end", values=[i] + list(row))
 
 # function untuk update treview berdasarkan bagi hasil
+
+
 def update_trv4(data):
     # membersihkan isi treeview sebelum memasukkan data baru
     for row in trv4.get_children():
@@ -186,6 +222,8 @@ def update_trv4(data):
         trv4.insert("", "end", values=[i] + list(row))
 
 # function untuk update treeview berdasarkan pokok
+
+
 def update_trv5(data):
     # membersihkan isi treeview sebelum memasukkan data baru
     for row in trv5.get_children():
@@ -196,7 +234,7 @@ def update_trv5(data):
         trv5.insert("", "end", values=[i] + list(row))
 
 
-def add_new():
+def add_new_borrow():
     try:
         # Ambil nilai dari setiap field
         nama_value = v_nama.get()
@@ -209,6 +247,7 @@ def add_new():
         resiko_kredit_value = 1.5/100 * jumlah_pinjaman_value
         bagi_hasil_value = 0.01 * jumlah_pinjaman_value
         pokok_value = jumlah_pinjaman_value / jangka_waktu_value
+        timestamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
         if not nama_value or not nip_value or not tanggal_lahir_value or not jumlah_pinjaman_value or not jangka_waktu_value:
             messagebox.showerror("Error", "Semua field harus diisi.")
@@ -238,7 +277,7 @@ def add_new():
             query = """
                 INSERT INTO BORROW
                 (NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH, TIMESTAMP)
-                values (:NAMA, :NIP, :PUSKESMAS, :TANGGAL_LAHIR, :ALAMAT, :JUMLAH_PINJAMAN, :JANGKA_WAKTU, :RESIKO_KREDIT, :BAGI_HASIL, :POKOK, :TERIMA_BERSIH, CURRENT_TIMESTAMP)
+                values (:NAMA, :NIP, :PUSKESMAS, :TANGGAL_LAHIR, :ALAMAT, :JUMLAH_PINJAMAN, :JANGKA_WAKTU, :RESIKO_KREDIT, :BAGI_HASIL, :POKOK, :TERIMA_BERSIH, :TIMESTAMP)
                 """
             params = {
                 "NAMA": nama_value,
@@ -251,18 +290,19 @@ def add_new():
                 "RESIKO_KREDIT": resiko_kredit_value,
                 "BAGI_HASIL": bagi_hasil_value,
                 "POKOK": round(pokok_value / 100) * 100,
-                "TERIMA_BERSIH": jumlah_pinjaman_value - resiko_kredit_value
+                "TERIMA_BERSIH": jumlah_pinjaman_value - resiko_kredit_value,
+                "TIMESTAMP": timestamp
             }
             cursor.execute(query, params)
             conn.commit()
             messagebox.showinfo("Info", "Data Berhasil ditambahkan !")
             print("Data added Succesfully.")
-            select_all()
+            select_all_borrow()
             select_based_loans()
             select_based_credit_risk()
             select_based_profit_sharing()
             select_based_pokok()
-            clear_field()
+            clear_field_borrow()
 
     except Exception as e:
         print("Error :", e)
@@ -270,7 +310,7 @@ def add_new():
             "Error", "Pastikan format data yang diupdate sudah benar")
 
 
-def update_data():
+def update_data_borrow():
     try:
         if messagebox.askyesno("Harap konfirmasi", "Apakah anda yakin ingin memperbarui data ini ?"):
             # validasi format tanggal lahir
@@ -309,8 +349,8 @@ def update_data():
             )
             cursor.execute(query, params)
             conn.commit()
-            clear_field()
-            select_all()
+            clear_field_borrow()
+            select_all_borrow()
             select_based_loans()
             select_based_credit_risk()
             select_based_profit_sharing()
@@ -326,7 +366,7 @@ def update_data():
             "Error", "Pastikan format data yang diupdate sudah benar")
 
 
-def getrow(event):
+def getrow_borrow(event):
 
     rowid = trv.identify_row(event.y)
     item = trv.item(rowid)
@@ -345,7 +385,7 @@ def getrow(event):
         print("Error: Insufficient values in the 'values atribute.")
 
 
-def clear_field():
+def clear_field_borrow():
     entry_nama.delete(0, 'end')
     entry_nip.delete(0, 'end')
     entry_puskesmas.delete(0, 'end')
@@ -355,7 +395,7 @@ def clear_field():
     jangkawaktu_entry.delete(0, 'end')
 
 
-def delete_data():
+def delete_data_borrow():
     try:
         id = v_id.get()
         if (messagebox.askyesno("Konfirmasi Hapus?", "Apakah yakin ingin menghapus data ini ?")):
@@ -363,8 +403,8 @@ def delete_data():
             cursor.execute(query)
             conn.commit()
             print("Success delete data")
-            clear_field()
-            select_all()
+            clear_field_borrow()
+            select_all_borrow()
             select_based_loans()
             select_based_credit_risk()
             select_based_profit_sharing()
@@ -374,9 +414,8 @@ def delete_data():
     except Exception as e:
         print("Error :", e)
 
-
 # untuk export data to excel
-def export_data():
+def export_data_borrow():
     try:
         # Menampilkan dialog untuk memilih lokasi penyimpanan file Excel
         file_path = filedialog.asksaveasfilename(
@@ -427,14 +466,14 @@ def search():
 
 def clear():
     ent.delete(0, 'end')
-    clear_field()
-    select_all()
+    clear_field_borrow()
+    select_all_borrow()
     select_based_loans()
     select_based_credit_risk()
     select_based_profit_sharing()
     select_based_pokok()
 
-# untuk mengecek notebook yang aktif 
+# untuk mengecek notebook yang aktif
 def notebook_event(event):
     current_tab = notebook.index(notebook.select())
     if current_tab == 1:
@@ -445,18 +484,22 @@ def notebook_event(event):
         select_based_profit_sharing()
     elif current_tab == 4:
         select_based_pokok()
-  
+
 
 # Wrapper
 wrapperPencarian = LabelFrame(root, text="Pencarian")
 wrapperDataPeminjam = LabelFrame(root, text="Data Peminjam")
 
-# For tab (notebook)
+# frame or tab (notebook)
 frame1 = ttk.Frame(notebook, width=400, height=280)
 frame2 = ttk.Frame(notebook, width=400, height=280)
 frame3 = ttk.Frame(notebook, width=400, height=280)
 frame4 = ttk.Frame(notebook, width=400, height=280)
 frame5 = ttk.Frame(notebook, width=400, height=280)
+
+# frame untuk Data Peminjam
+frameDataPeminjam = ttk.Frame(notebook, width=400, height=280)
+frameDataSetor = ttk.Frame(notebook, width=400, height=280) 
 
 # frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
 frame1.grid_rowconfigure(0, weight=1, minsize=100)
@@ -466,7 +509,7 @@ frame3.grid(row=0, column=0, sticky="nsew")
 frame4.grid(row=0, column=0, sticky="nsew")
 frame5.grid(row=0, column=0, sticky="nsew")
 
-# Add Frames to notebook
+# Add Frames to notebook display data
 notebook.add(frame1, text='Semua')
 notebook.add(frame2, text='Per Jumlah Pinjaman')
 notebook.add(frame3, text='Per Resiko Kredit')
@@ -474,6 +517,10 @@ notebook.add(frame4, text='Per Bagi Hasil')
 notebook.add(frame5, text='Per Sisa Pokok')
 
 notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
+
+# Add Frame to notebook to input data from user
+notebook.add(frameDataPeminjam, text='Input Data Peminjam')
+notebook.add(frameDataSetor, text='Input Data Setoran')
 
 # Posisi Wrapper
 wrapperPencarian.pack(fill="both", padx=20, pady=10)
@@ -541,10 +588,11 @@ jangkawaktu_entry.grid(row=2, column=3, sticky="w", padx=5, pady=5)
 
 # Frame button add, update, delete
 frame_btn = Frame(wrapperDataPeminjam)
-update_btn = Button(frame_btn, text="Update", command=update_data)
-add_btn = Button(frame_btn, text="Tambah Data", command=add_new)
-delete_btn = Button(frame_btn, text="Hapus", command=delete_data)
-export_btn = Button(frame_btn, text="Export ke Excel", command=export_data)
+update_btn = Button(frame_btn, text="Update", command=update_data_borrow)
+add_btn = Button(frame_btn, text="Tambah Data", command=add_new_borrow)
+delete_btn = Button(frame_btn, text="Hapus", command=delete_data_borrow)
+export_btn = Button(frame_btn, text="Export ke Excel",
+                    command=export_data_borrow)
 
 frame_btn.grid(row=4, column=0, columnspan=5, sticky="w", pady=10)
 add_btn.pack(side=LEFT, padx=5)
@@ -564,10 +612,12 @@ cbtn = Button(wrapperPencarian, text="Clear", command=clear)
 cbtn.pack(side=LEFT, padx=6)
 
 # Function untuk create treeview
+
+
 def create_treview(frame, columns, headers, widths, bind_function=None, Mysky=None):
     create_tab_notebook()
     trv = ttk.Treeview(frame, column=columns, show="headings", height=12)
-    
+
     trv.tag_configure("header", background=Mysky)
 
     trv.grid(row=0, column=0, sticky="nsew")
@@ -594,30 +644,33 @@ def create_treview(frame, columns, headers, widths, bind_function=None, Mysky=No
 
     return trv
 
+
 def create_tab_notebook():
     style = Style()
     style.theme_use("clam")
 
-# penerapan untuk tampilkan data semua
-columns_trv = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
-headers_trv = ("Id", "No", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah",
-               "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih")
-widths_trv = (0, 70, 120, 120, 120, 100, 120, 100, 120, 120, 100, 100)
 
-    
+# penerapan untuk tampilkan data semua
+columns_trv = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+headers_trv = ("Id", "No", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah",
+               "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih", "Tanggal Pinjam")
+widths_trv = (0, 70, 120, 120, 120, 100, 120, 100, 120, 120, 100, 100, 100, 100)
+
+
 trv = create_treview(frame1, columns_trv, headers_trv,
-                     widths_trv, bind_function=getrow)
+                     widths_trv, bind_function=getrow_borrow)
 
 trv.column("#12", anchor=CENTER)
+trv.column("#13", anchor=CENTER)
 
 # penerapan untuk tampilkan data per Jumlah Pinjaman
-column_trv2 = (0, 1, 2, 3, 4, 5) 
+column_trv2 = (0, 1, 2, 3, 4, 5)
 headers_trv2 = ("Id", "No", "Nama", "Puskesmas",
                 "Tanggal Realisasi", "Jumlah Pinjaman")
 widths_trv2 = (0, 70, 120, 120, 120, 120)
 
 trv2 = create_treview(frame2, column_trv2, headers_trv2,
-                      widths_trv2, bind_function=getrow)
+                      widths_trv2, bind_function=getrow_borrow)
 
 # penerapan untuk tampilkan data per resiko kredit
 column_trv3 = (0, 1, 2, 3, 4)
@@ -625,7 +678,7 @@ headers_trv3 = ("Id", "No", "Nama", "Puskesmas", "Resiko Kredit")
 widths_trv3 = (0, 70, 120, 120, 200)
 
 trv3 = create_treview(frame3, column_trv3, headers_trv3,
-                      widths_trv3, bind_function=getrow)
+                      widths_trv3, bind_function=getrow_borrow)
 
 # penerapan untuk tampilkan data per bagi hasil
 column_trv4 = (0, 1, 2, 3, 4)
@@ -633,23 +686,32 @@ headers_trv4 = ("Id", "No", "Nama", "Puskesmas", "Bagi Hasil")
 widths_trv4 = (0, 70, 120, 120, 200)
 
 trv4 = create_treview(frame4, column_trv4, headers_trv4,
-                      widths_trv4, bind_function=getrow)
+                      widths_trv4, bind_function=getrow_borrow)
 
 # penerapan untuk tampilkan data per Sisa Pokok
 column_trv5 = (0, 1, 2, 3, 4)
 headers_trv5 = ("Id", "No", "Nama", "Puskesmas", "Pokok")
 widths_trv5 = (0, 70, 120, 120, 200)
 
-trv5 = create_treview(frame5, column_trv5, headers_trv5, widths_trv5, bind_function=getrow)
+trv5 = create_treview(frame5, column_trv5, headers_trv5,
+                      widths_trv5, bind_function=getrow_borrow)
 
 
 if __name__ == '__main__':
     root.title("Aplikasi Simpan Pinjam")
     root.geometry("1060x650")
     root.resizable(FALSE, FALSE)
-    if (isFirst("BORROW")):
-        create_table()
-    else:
-        select_all()
+
+    try:
+        
+        create_deposits_table()
+
+        if (isFirst("BORROW")):
+            create_borrow_table()
+        else:
+            select_all_borrow()
+
+    except Exception as e:
+        print(f"Error: {e}")
     root.mainloop()
     conn.close()

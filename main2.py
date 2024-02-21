@@ -16,12 +16,12 @@ root = Tk()
 conn = sqlite3.connect("pinjamanpuskesmas.db")
 cursor = conn.cursor()
 
-# Create a notebook
+# Create a notebook baris pertama
 notebook = ttk.Notebook(root)
-notebook.pack(fill="both", padx=20, pady=10)
+# notebook.pack(fill="both", padx=20, pady=10)
+notebook.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
 # membuat tabel borrow
-
 
 def create_borrow_table():
     # Menonaktifkan pengecekan kunci asing
@@ -51,7 +51,6 @@ def create_borrow_table():
     conn.commit()
 
 # membuat table deposits
-
 
 def create_deposits_table():
     cursor.execute("PRAGMA foreign_keys=off")
@@ -482,6 +481,8 @@ def clear():
     select_based_pokok()
 
 # untuk mengecek notebook yang aktif
+
+
 def notebook_event(event):
     current_tab = notebook.index(notebook.select())
     if current_tab == 1:
@@ -498,7 +499,6 @@ def notebook_event(event):
 wrapperPencarian = LabelFrame(root, text="Pencarian")
 wrapperDataPeminjam = LabelFrame(root, text="Data Peminjam")
 
-
 # frame or tab (notebook)
 frame1 = ttk.Frame(notebook, width=400, height=280)
 frame2 = ttk.Frame(notebook, width=400, height=280)
@@ -508,7 +508,10 @@ frame5 = ttk.Frame(notebook, width=400, height=280)
 
 # frame untuk Data Peminjam
 frameDataPeminjam = ttk.Frame(notebook, width=400, height=280)
-frameDataSetor = ttk.Frame(notebook, width=400, height=280)
+frameDataSetor = ttk.Frame(notebook, width=400, height=280) 
+
+frameDataPeminjam.grid(row=0, column=0, sticky="nsew")
+frameDataSetor.grid(row=0, column=0, sticky="nsew")
 
 # frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
 frame1.grid_rowconfigure(0, weight=1, minsize=100)
@@ -525,15 +528,16 @@ notebook.add(frame3, text='Per Resiko Kredit')
 notebook.add(frame4, text='Per Bagi Hasil')
 notebook.add(frame5, text='Per Sisa Pokok')
 
-notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
-
-# Add Frame to notebook to input data from user
 notebook.add(frameDataPeminjam, text='Input Data Peminjam')
 notebook.add(frameDataSetor, text='Input Data Setoran')
 
+notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
+
 # Posisi Wrapper
-wrapperPencarian.pack(fill="both", padx=20, pady=10)
-wrapperDataPeminjam.pack(fill="both", padx=20, pady=10)
+# wrapperPencarian.pack(fill="both", padx=20, pady=10)
+wrapperPencarian.grid(row=1, column=0, padx=(10, 50), pady=10, sticky="w")
+wrapperDataPeminjam.grid(row=2, column=0, padx=(10, 50), pady=10, sticky="w")
+
 
 # Form variable
 v_id = IntVar()
@@ -618,7 +622,7 @@ ent.pack(side=LEFT, padx=6, pady=15)
 btn = Button(wrapperPencarian, text="Search", command=search)
 btn.pack(side=LEFT, padx=6, pady=15)
 cbtn = Button(wrapperPencarian, text="Clear", command=clear)
-cbtn.pack(side=LEFT, padx=6)
+cbtn.pack(side=LEFT, padx=(6,20))
 
 # Function untuk create treeview
 
@@ -663,7 +667,8 @@ def create_tab_notebook():
 columns_trv = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
 headers_trv = ("Id", "No", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah",
                "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih", "Tanggal Pinjam")
-widths_trv = (0, 70, 120, 120, 120, 100, 120, 100, 120, 120, 100, 100, 100, 100)
+widths_trv = (0, 70, 120, 120, 120, 100, 120,
+              100, 120, 120, 100, 100, 100, 100)
 
 
 trv = create_treview(frame1, columns_trv, headers_trv,
@@ -712,7 +717,7 @@ if __name__ == '__main__':
     root.resizable(FALSE, FALSE)
 
     try:
-        
+
         create_deposits_table()
 
         if (isFirst("BORROW")):
