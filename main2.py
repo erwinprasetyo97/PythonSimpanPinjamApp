@@ -20,9 +20,11 @@ cursor = conn.cursor()
 
 # Create a notebook baris pertama
 notebook = ttk.Notebook(root)
+notebookForPinjaman = ttk.Notebook(root)
+
 # notebook.pack(fill="both", padx=20, pady=10)
 notebook.grid(row=0, column=0, padx=(10, 20), pady=10, sticky="w")
-
+notebookForPinjaman.grid(row=2, column=0, padx=(10,20), pady=10, sticky="w")
 # membuat tabel borrow
 
 
@@ -500,6 +502,7 @@ def notebook_event(event):
 
 
 # Wrapper
+
 wrapperPencarian = LabelFrame(root, text="Pencarian")
 wrapperDataPeminjam = LabelFrame(root, text="Data Peminjam")
 
@@ -532,7 +535,7 @@ notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
 
 # Posisi Wrapper
 # wrapperPencarian.pack(fill="both", padx=20, pady=10)
-wrapperPencarian.grid(row=1, column=0, padx=(10, 50), pady=10, sticky="w")
+wrapperPencarian.grid(row=1, column=0, padx=(10, 0), pady=10, sticky="w", columnspan=2)
 wrapperDataPeminjam.grid(row=2, column=0, padx=(10, 50), pady=10, sticky="w")
 
 
@@ -665,7 +668,7 @@ columns_trv = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
 headers_trv = ("Id", "No", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah",
                "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih", "Tanggal Pinjam")
 widths_trv = (0, 70, 120, 120, 120, 100, 120,
-              100, 120, 120, 100, 100, 100, 100)
+              100, 120, 120, 100, 100, 100, 150)
 
 
 trv = create_treview(frame1, columns_trv, headers_trv,
