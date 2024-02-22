@@ -12,6 +12,8 @@ from tkinter.ttk import Notebook, Style
 
 
 root = Tk()
+root.grid_rowconfigure(0, weight=1)
+root.grid_columnconfigure(0, weight=1)
 
 conn = sqlite3.connect("pinjamanpuskesmas.db")
 cursor = conn.cursor()
@@ -19,9 +21,10 @@ cursor = conn.cursor()
 # Create a notebook baris pertama
 notebook = ttk.Notebook(root)
 # notebook.pack(fill="both", padx=20, pady=10)
-notebook.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+notebook.grid(row=0, column=0, padx=(10, 20), pady=10, sticky="w")
 
 # membuat tabel borrow
+
 
 def create_borrow_table():
     # Menonaktifkan pengecekan kunci asing
@@ -51,6 +54,7 @@ def create_borrow_table():
     conn.commit()
 
 # membuat table deposits
+
 
 def create_deposits_table():
     cursor.execute("PRAGMA foreign_keys=off")
@@ -506,16 +510,11 @@ frame3 = ttk.Frame(notebook, width=400, height=280)
 frame4 = ttk.Frame(notebook, width=400, height=280)
 frame5 = ttk.Frame(notebook, width=400, height=280)
 
-# frame untuk Data Peminjam
-frameDataPeminjam = ttk.Frame(notebook, width=400, height=280)
-frameDataSetor = ttk.Frame(notebook, width=400, height=280) 
-
-frameDataPeminjam.grid(row=0, column=0, sticky="nsew")
-frameDataSetor.grid(row=0, column=0, sticky="nsew")
 
 # frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
 frame1.grid_rowconfigure(0, weight=1, minsize=100)
 frame1.grid_columnconfigure(0, weight=1, minsize=100)
+frame1.grid(row=0, column=0, sticky="nsew", padx=(10, 20), pady=10)
 frame2.grid(row=0, column=0, sticky="nsew")
 frame3.grid(row=0, column=0, sticky="nsew")
 frame4.grid(row=0, column=0, sticky="nsew")
@@ -528,8 +527,6 @@ notebook.add(frame3, text='Per Resiko Kredit')
 notebook.add(frame4, text='Per Bagi Hasil')
 notebook.add(frame5, text='Per Sisa Pokok')
 
-notebook.add(frameDataPeminjam, text='Input Data Peminjam')
-notebook.add(frameDataSetor, text='Input Data Setoran')
 
 notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
 
@@ -622,7 +619,7 @@ ent.pack(side=LEFT, padx=6, pady=15)
 btn = Button(wrapperPencarian, text="Search", command=search)
 btn.pack(side=LEFT, padx=6, pady=15)
 cbtn = Button(wrapperPencarian, text="Clear", command=clear)
-cbtn.pack(side=LEFT, padx=(6,20))
+cbtn.pack(side=LEFT, padx=(6, 20))
 
 # Function untuk create treeview
 
