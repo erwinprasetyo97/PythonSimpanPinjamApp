@@ -20,11 +20,11 @@ cursor = conn.cursor()
 
 # Create a notebook baris pertama
 notebook = ttk.Notebook(root)
-notebookForPinjaman = ttk.Notebook(root)
+notebook2 = ttk.Notebook(root)
 
 # notebook.pack(fill="both", padx=20, pady=10)
 notebook.grid(row=0, column=0, padx=(10, 20), pady=10, sticky="w")
-notebookForPinjaman.grid(row=2, column=0, padx=(10,20), pady=10, sticky="w")
+notebook2.grid(row=2, column=0, padx=(10,20), pady=10, sticky="w")
 # membuat tabel borrow
 
 
@@ -504,7 +504,7 @@ def notebook_event(event):
 # Wrapper
 
 wrapperPencarian = LabelFrame(root, text="Pencarian")
-wrapperDataPeminjam = LabelFrame(root, text="Data Peminjam")
+# wrapperDataPeminjam = LabelFrame(root, text="Data Peminjam")
 
 # frame or tab (notebook)
 frame1 = ttk.Frame(notebook, width=400, height=280)
@@ -512,6 +512,10 @@ frame2 = ttk.Frame(notebook, width=400, height=280)
 frame3 = ttk.Frame(notebook, width=400, height=280)
 frame4 = ttk.Frame(notebook, width=400, height=280)
 frame5 = ttk.Frame(notebook, width=400, height=280)
+
+# Frame untuk tab kedua
+frameInputDataPeminjam = ttk.Frame(notebook2, width=400, height=200)
+frameInputDataSetoran = ttk.Frame(notebook2, width=400, height=200)
 
 
 # frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
@@ -523,6 +527,11 @@ frame3.grid(row=0, column=0, sticky="nsew")
 frame4.grid(row=0, column=0, sticky="nsew")
 frame5.grid(row=0, column=0, sticky="nsew")
 
+frameInputDataPeminjam.grid(row=0, column=0, sticky="nsew")
+frameInputDataSetoran.grid(row=0, column=0, sticky="nsew")
+
+
+
 # Add Frames to notebook display data
 notebook.add(frame1, text='Semua')
 notebook.add(frame2, text='Per Jumlah Pinjaman')
@@ -530,13 +539,16 @@ notebook.add(frame3, text='Per Resiko Kredit')
 notebook.add(frame4, text='Per Bagi Hasil')
 notebook.add(frame5, text='Per Sisa Pokok')
 
+notebook2.add(frameInputDataPeminjam, text='Input Data Peminjam')
+notebook2.add(frameInputDataSetoran, text="Input Data Setoran")
+
 
 notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
 
 # Posisi Wrapper
 # wrapperPencarian.pack(fill="both", padx=20, pady=10)
 wrapperPencarian.grid(row=1, column=0, padx=(10, 0), pady=10, sticky="w", columnspan=2)
-wrapperDataPeminjam.grid(row=2, column=0, padx=(10, 50), pady=10, sticky="w")
+# wrapperDataPeminjam.grid(row=2, column=0, padx=(10, 50), pady=10, sticky="w")
 
 
 # Form variable
@@ -550,7 +562,7 @@ v_jumlah_pinjaman = IntVar()
 v_jangka_waktu = IntVar()
 
 # Frame untuk Form di Wrapper 3
-form_frame = ttk.Frame(wrapperDataPeminjam, padding="5")
+form_frame = ttk.Frame(frameInputDataPeminjam, padding="5")
 form_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
 # Label dan Entry untuk Nama
@@ -600,7 +612,7 @@ jangkawaktu_entry.grid(row=2, column=3, sticky="w", padx=5, pady=5)
 
 
 # Frame button add, update, delete
-frame_btn = Frame(wrapperDataPeminjam)
+frame_btn = Frame(frameInputDataPeminjam)
 update_btn = Button(frame_btn, text="Update", command=update_data_borrow)
 add_btn = Button(frame_btn, text="Tambah Data", command=add_new_borrow)
 delete_btn = Button(frame_btn, text="Hapus", command=delete_data_borrow)

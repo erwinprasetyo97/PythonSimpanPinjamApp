@@ -1,61 +1,66 @@
 import tkinter as tk
 from tkinter import ttk
 
-def notebook_event(event):
-    current_tab = notebook.index(notebook.select())
-    if current_tab == 1:
-        select_based_loans()
-    elif current_tab == 2:
-        select_based_credit_risk()
-    elif current_tab == 3:
-        select_based_profit_sharing()
-    elif current_tab == 4:
-        select_based_pokok()
+def submit():
+    # Fungsi ini dapat digunakan untuk mengambil nilai dari setiap input dan melakukan sesuatu dengannya
+    nama = entry_nama.get()
+    nip = entry_nip.get()
+    puskesmas = entry_puskesmas.get()
+    alamat_rumah = entry_alamat_rumah.get()
+    tanggal_lahir = entry_tanggal_lahir.get()
+    jumlah_pinjaman = entry_jumlah_pinjaman.get()
+    jangka_waktu = entry_jangka_waktu.get()
 
-root = tk.Tk()
-root.title("Aplikasi Simpan Pinjam")
-root.geometry("1060x650")
-root.resizable(False, False)
+    # Contoh: Menampilkan data yang diambil
+    print("Nama:", nama)
+    print("NIP:", nip)
+    print("Puskesmas:", puskesmas)
+    print("Alamat Rumah:", alamat_rumah)
+    print("Tanggal Lahir:", tanggal_lahir)
+    print("Jumlah Pinjaman:", jumlah_pinjaman)
+    print("Jangka Waktu:", jangka_waktu)
 
-# Baris pertama: Notebook untuk menampilkan data
-notebook = ttk.Notebook(root)
-notebook.grid(row=0, column=0, sticky="nsew")
+# Membuat window
+window = tk.Tk()
+window.title("Form Peminjaman")
 
-# ... (frame1, frame2, frame3, frame4, frame5)
+# Membuat ttk.Notebook
+notebook = ttk.Notebook(window)
 
-# Add Frames to notebook display data
-notebook.add(frame1, text='Semua')
-notebook.add(frame2, text='Per Jumlah Pinjaman')
-notebook.add(frame3, text='Per Resiko Kredit')
-notebook.add(frame4, text='Per Bagi Hasil')
-notebook.add(frame5, text='Per Sisa Pokok')
+# Membuat frame untuk setiap tab
+frame_tab1 = ttk.Frame(notebook)
+frame_tab2 = ttk.Frame(notebook)
 
-notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
+# Menambahkan tab ke notebook
+notebook.add(frame_tab1, text='Tab 1')
+notebook.add(frame_tab2, text='Tab 2')
 
-# Baris kedua: Notebook untuk pencarian
-search_notebook = ttk.Notebook(root)
-search_notebook.grid(row=1, column=0, sticky="nsew")
+# Membuat label dan input untuk setiap data di setiap tab
+label_nama = ttk.Label(frame_tab1, text="Nama:")
+entry_nama = ttk.Entry(frame_tab1)
 
-search_frame1 = ttk.Frame(search_notebook, width=400, height=280)
-search_frame2 = ttk.Frame(search_notebook, width=400, height=280)
-# ... (tambahkan frame pencarian lainnya)
+label_nip = ttk.Label(frame_tab1, text="NIP:")
+entry_nip = ttk.Entry(frame_tab1)
 
-search_notebook.add(search_frame1, text='Pencarian 1')
-search_notebook.add(search_frame2, text='Pencarian 2')
-# ... (tambahkan tab pencarian lainnya)
+# ... (lanjutkan untuk elemen lainnya)
 
-# Baris ketiga: Notebook untuk inputan
-input_notebook = ttk.Notebook(root)
-input_notebook.grid(row=2, column=0, sticky="nsew")
+# Menempatkan label dan input ke dalam grid di setiap tab
+label_nama.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
+entry_nama.grid(row=0, column=1, padx=5, pady=5)
 
-input_frame1 = ttk.Frame(input_notebook, width=400, height=280)
-input_frame2 = ttk.Frame(input_notebook, width=400, height=280)
-# ... (tambahkan frame input lainnya)
+label_nip.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+entry_nip.grid(row=1, column=1, padx=5, pady=5)
 
-input_notebook.add(input_frame1, text='Input Data Peminjam')
-input_notebook.add(input_frame2, text='Input Data Setoran')
-# ... (tambahkan tab input lainnya)
+# ... (lanjutkan untuk elemen lainnya)
 
-# ...
+# Membuat tombol submit di setiap tab
+button_submit_tab1 = ttk.Button(frame_tab1, text="Submit", command=submit)
+button_submit_tab2 = ttk.Button(frame_tab2, text="Submit", command=submit)
 
-root.mainloop()
+# Menempatkan tombol submit di setiap tab
+button_submit_tab1.grid(row=7, column=0, columnspan=2, pady=10)
+button_submit_tab2.grid(row=7, column=0, columnspan=2, pady=10)
+
+# Menjalankan aplikasi
+notebook.pack(expand=1, fill="both")
+window.mainloop()
