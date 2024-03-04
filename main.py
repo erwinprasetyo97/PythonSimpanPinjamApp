@@ -12,14 +12,19 @@ from tkinter.ttk import Notebook, Style
 
 
 root = Tk()
+root.grid_rowconfigure(0, weight=1)
+root.grid_columnconfigure(0, weight=1)
 
 conn = sqlite3.connect("pinjamanpuskesmas.db")
 cursor = conn.cursor()
 
-# Create a notebook
+# Create a notebook baris pertama
 notebook = ttk.Notebook(root)
-notebook.pack(fill="both", padx=20, pady=10)
+notebook2 = ttk.Notebook(root)
 
+# notebook.pack(fill="both", padx=20, pady=10)
+notebook.grid(row=0, column=0, padx=(20, 20), pady=10, sticky="w")
+notebook2.grid(row=2, column=0, padx=(20, 20), pady=10, sticky="nsew")
 # membuat tabel borrow
 
 
@@ -51,6 +56,8 @@ def create_borrow_table():
     conn.commit()
 
 # membuat table deposits
+
+
 def create_deposits_table():
     cursor.execute("PRAGMA foreign_keys=off")
     cursor.execute("PRAGMA timezone = 'Asia/Jakarta'")
@@ -92,6 +99,8 @@ def is_valid_date(date_str):
         return FALSE
 
 # query for display all data
+
+
 def select_all_borrow():
     try:
         # Menentukan kolom yang ingin ditampilkan
@@ -104,6 +113,8 @@ def select_all_borrow():
         print("Error fetching data:", e)
 
 # query for display data based "jumlah_pinjaman"
+
+
 def select_based_loans(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
@@ -365,6 +376,8 @@ def update_data_borrow():
         messagebox.showerror(
             "Error", "Pastikan format data yang diupdate sudah benar")
 
+# function untuk menampilkan data pinjaman dari database kedalam treeview
+
 
 def getrow_borrow(event):
 
@@ -380,6 +393,17 @@ def getrow_borrow(event):
         v_alamat_rumah.set(item['values'][6])
         v_jumlah_pinjaman.set(item['values'][7])
         v_jangka_waktu.set(item['values'][8])
+
+    else:
+        print("Error: Insufficient values in the 'values atribute.")
+
+
+def getrow_deposits(event):
+    rowid = trv.identify_row(event.y)
+    item = trv.item(rowid)
+
+    if 'values' in item and len(item['values']) >= 10:
+        v_id.set(item['values'][0])
 
     else:
         print("Error: Insufficient values in the 'values atribute.")
@@ -415,6 +439,8 @@ def delete_data_borrow():
         print("Error :", e)
 
 # untuk export data to excel
+
+
 def export_data_borrow():
     try:
         # Menampilkan dialog untuk memilih lokasi penyimpanan file Excel
@@ -474,6 +500,8 @@ def clear():
     select_based_pokok()
 
 # untuk mengecek notebook yang aktif
+
+
 def notebook_event(event):
     current_tab = notebook.index(notebook.select())
     if current_tab == 1:
@@ -487,8 +515,8 @@ def notebook_event(event):
 
 
 # Wrapper
+
 wrapperPencarian = LabelFrame(root, text="Pencarian")
-wrapperDataPeminjam = LabelFrame(root, text="Data Peminjam")
 
 # frame or tab (notebook)
 frame1 = ttk.Frame(notebook, width=400, height=280)
@@ -496,18 +524,28 @@ frame2 = ttk.Frame(notebook, width=400, height=280)
 frame3 = ttk.Frame(notebook, width=400, height=280)
 frame4 = ttk.Frame(notebook, width=400, height=280)
 frame5 = ttk.Frame(notebook, width=400, height=280)
+frame_display_deposits = ttk.Frame(notebook, width=400, height=280)
 
-# frame untuk Data Peminjam
-frameDataPeminjam = ttk.Frame(notebook, width=400, height=280)
-frameDataSetor = ttk.Frame(notebook, width=400, height=280) 
+# Frame untuk tab kedua
+frameInputDataPeminjam = ttk.Frame(notebook2, width=400, height=200)
+frameInputDataSetoran = ttk.Frame(notebook2, width=400, height=200)
 
-# frame1.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
+
+# frame notbook untuk inputData Pinjaman
 frame1.grid_rowconfigure(0, weight=1, minsize=100)
 frame1.grid_columnconfigure(0, weight=1, minsize=100)
+frame1.grid(row=0, column=0, sticky="nsew", padx=(10, 20), pady=10)
 frame2.grid(row=0, column=0, sticky="nsew")
 frame3.grid(row=0, column=0, sticky="nsew")
 frame4.grid(row=0, column=0, sticky="nsew")
 frame5.grid(row=0, column=0, sticky="nsew")
+
+# frame notebook untuk menampilkan inputDataSetoran
+frame_display_deposits.grid(row=0, column=0, sticky="nsew")
+
+frameInputDataPeminjam.grid(row=0, column=0, sticky="nsew")
+frameInputDataSetoran.grid(row=0, column=0, sticky="nsew")
+
 
 # Add Frames to notebook display data
 notebook.add(frame1, text='Semua')
@@ -515,16 +553,18 @@ notebook.add(frame2, text='Per Jumlah Pinjaman')
 notebook.add(frame3, text='Per Resiko Kredit')
 notebook.add(frame4, text='Per Bagi Hasil')
 notebook.add(frame5, text='Per Sisa Pokok')
+notebook.add(frame_display_deposits, text="Data Setoran")
+
+notebook2.add(frameInputDataPeminjam, text='Input Data Peminjam')
+notebook2.add(frameInputDataSetoran, text="Input Data Setoran")
+
 
 notebook.bind("<<NotebookTabChanged>>", lambda event: notebook_event(event))
 
-# Add Frame to notebook to input data from user
-notebook.add(frameDataPeminjam, text='Input Data Peminjam')
-notebook.add(frameDataSetor, text='Input Data Setoran')
-
 # Posisi Wrapper
-wrapperPencarian.pack(fill="both", padx=20, pady=10)
-wrapperDataPeminjam.pack(fill="both", padx=20, pady=10)
+# wrapperPencarian.pack(fill="both", padx=20, pady=10)
+wrapperPencarian.grid(row=1, column=0, padx=(
+    20, 20), pady=10, sticky="nsew", columnspan=2)
 
 # Form variable
 v_id = IntVar()
@@ -535,70 +575,106 @@ v_tanggal_lahir = StringVar()
 v_alamat_rumah = StringVar()
 v_jumlah_pinjaman = IntVar()
 v_jangka_waktu = IntVar()
+v_jumlah_setoran = IntVar()
 
-# Frame untuk Form di Wrapper 3
-form_frame = ttk.Frame(wrapperDataPeminjam, padding="5")
-form_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+# Frame untuk Form di Input Data Pinjaman
+form_frame_borrow = ttk.Frame(frameInputDataPeminjam, padding="5")
+form_frame_borrow.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
 # Label dan Entry untuk Nama
-label_nama = ttk.Label(form_frame, text="Nama")
+label_nama = ttk.Label(form_frame_borrow, text="Nama")
 label_nama.grid(row=0, column=0, sticky="w", padx=5, pady=5)
-entry_nama = ttk.Entry(form_frame, textvariable=v_nama)
+entry_nama = ttk.Entry(form_frame_borrow, textvariable=v_nama)
 entry_nama.grid(row=0, column=1, padx=5, pady=5)
 
 # Label dan Entry untuk NIP
-label_nip = ttk.Label(form_frame, text="NIP")
+label_nip = ttk.Label(form_frame_borrow, text="NIP")
 label_nip.grid(row=1, column=0, sticky="w", padx=5, pady=5)
-entry_nip = ttk.Entry(form_frame, textvariable=v_nip)
+entry_nip = ttk.Entry(form_frame_borrow, textvariable=v_nip)
 entry_nip.grid(row=1, column=1, padx=5, pady=5)
 
 # Label dan Entry untuk Puskesmas
-label_puskesmas = ttk.Label(form_frame, text="Puskesmas")
+label_puskesmas = ttk.Label(form_frame_borrow, text="Puskesmas")
 label_puskesmas.grid(row=2, column=0, sticky="w", padx=5, pady=5)
-entry_puskesmas = ttk.Entry(form_frame, textvariable=v_puskesmas)
+entry_puskesmas = ttk.Entry(form_frame_borrow, textvariable=v_puskesmas)
 entry_puskesmas.grid(row=2, column=1, padx=5, pady=5)
 
 # Label dan Entry untuk alamat Rumah
-label_address = ttk.Label(form_frame, text="Alamat Rumah")
+label_address = ttk.Label(form_frame_borrow, text="Alamat Rumah")
 label_address.grid(row=3, column=0, sticky="w", padx=5, pady=5)
-address_entry = ttk.Entry(form_frame, textvariable=v_alamat_rumah)
+address_entry = ttk.Entry(form_frame_borrow, textvariable=v_alamat_rumah)
 address_entry.grid(row=3, column=1, sticky="w", padx=5, pady=5)
 
 # Label dan Entry untuk Tanggal Lahir
-dob_label = ttk.Label(form_frame, text="Tanggal Lahir")
+dob_label = ttk.Label(form_frame_borrow, text="Tanggal Lahir")
 dob_label.grid(row=0, column=2, sticky="w", padx=5, pady=5)
-dob_entry = DateEntry(form_frame, selectmode='day',
+dob_entry = DateEntry(form_frame_borrow, selectmode='day',
                       textvariable=v_tanggal_lahir, date_pattern="dd/mm/y")
 dob_entry.grid(row=0, column=3, padx=5, pady=5, sticky="w")
 dob_entry.insert(0, "dd/mm/yyyy")
 
 
 # Label dan Entry untuk Jumlah pinjaman
-label_jumlahpinjaman = ttk.Label(form_frame, text="Jumlah Pinjaman")
+label_jumlahpinjaman = ttk.Label(form_frame_borrow, text="Jumlah Pinjaman")
 label_jumlahpinjaman.grid(row=1, column=2, sticky="w", padx=5, pady=5)
-jumlahpinjaman_entry = ttk.Entry(form_frame, textvariable=v_jumlah_pinjaman)
+jumlahpinjaman_entry = ttk.Entry(
+    form_frame_borrow, textvariable=v_jumlah_pinjaman)
 jumlahpinjaman_entry.grid(row=1, column=3, sticky="w", padx=5, pady=5)
 
 # Label dan Entry untuk Jangka waktu
-label_jangkawaktu = ttk.Label(form_frame, text="Jangka Waktu (bulan)")
+label_jangkawaktu = ttk.Label(form_frame_borrow, text="Jangka Waktu (bulan)")
 label_jangkawaktu.grid(row=2, column=2, sticky="w", padx=5, pady=5)
-jangkawaktu_entry = ttk.Entry(form_frame, textvariable=v_jangka_waktu)
+jangkawaktu_entry = ttk.Entry(form_frame_borrow, textvariable=v_jangka_waktu)
 jangkawaktu_entry.grid(row=2, column=3, sticky="w", padx=5, pady=5)
 
+# Frame button add, update, delete pada InputDataPinjaman
+frame_btn_borrow = Frame(frameInputDataPeminjam)
+update_btn_borrow = Button(frame_btn_borrow, text="Update Data Pinjaman", command=update_data_borrow)
+add_btn_borrow = Button(frame_btn_borrow, text="Tambah Data Pinjaman", command=add_new_borrow)
+delete_btn_borrow = Button(frame_btn_borrow, text="Hapus Data Pinjaman", command=delete_data_borrow)
+export_btn_borrow = Button(frame_btn_borrow, text="Export ke Excel", command=export_data_borrow)
 
-# Frame button add, update, delete
-frame_btn = Frame(wrapperDataPeminjam)
-update_btn = Button(frame_btn, text="Update", command=update_data_borrow)
-add_btn = Button(frame_btn, text="Tambah Data", command=add_new_borrow)
-delete_btn = Button(frame_btn, text="Hapus", command=delete_data_borrow)
-export_btn = Button(frame_btn, text="Export ke Excel",
-                    command=export_data_borrow)
+frame_btn_borrow.grid(row=4, column=0, columnspan=5, sticky="w", pady=10)
+add_btn_borrow.pack(side=LEFT, padx=5)
+update_btn_borrow.pack(side=LEFT, padx=5)
+delete_btn_borrow.pack(side=LEFT, padx=5)
+export_btn_borrow.pack(side=LEFT, padx=5)
 
-frame_btn.grid(row=4, column=0, columnspan=5, sticky="w", pady=10)
-add_btn.pack(side=LEFT, padx=5)
-update_btn.pack(side=LEFT, padx=5)
-delete_btn.pack(side=LEFT, padx=5)
-export_btn.pack(side=LEFT, padx=5)
+# Frame untuk di notebook Input Data Setoran
+form_frame_deposits = ttk.Frame(frameInputDataSetoran, padding="5")
+form_frame_deposits.grid(row=0, column=0, sticky="nsew")
+
+# Label dan Entry untuk Nama di Input Setoran
+label_nama_setoran = ttk.Label(form_frame_deposits, text="Nama")
+label_nama_setoran.grid(row=0, column=0, sticky="w", padx=5, pady=5)
+entry_nama_setoran = ttk.Entry(form_frame_deposits, textvariable=v_nama, state="readonly")
+entry_nama_setoran.grid(row=0, column=1, padx=5, pady=5)
+
+# Label dan Entry untuk Nama di Input Setoran
+label_puskesmas_setoran = ttk.Label(form_frame_deposits, text="Puskesmas")
+label_puskesmas_setoran.grid(row=0, column=2, sticky="w", padx=5, pady=5)
+entry_puskesmas_setoran = ttk.Entry(form_frame_deposits, textvariable=v_puskesmas, state="readonly")
+entry_puskesmas_setoran.grid(row=0, column=3, padx=5, pady=5)
+
+# Label dan Entry untuk Jumlah Setoran di Input Setoran
+label_jumlah_setoran = ttk.Label(form_frame_deposits, text="Jumlah Setoran")
+label_jumlah_setoran.grid(row=1, column=0, sticky="w", padx=5, pady=5)
+entry_jumlah_setoran = ttk.Entry(form_frame_deposits, textvariable=v_jumlah_setoran)
+entry_jumlah_setoran.grid(row=1, column=1, padx=5, pady=5)
+
+# button untuk Input Data Setoran
+frame_btn_deposit = Frame(frameInputDataSetoran)
+update_btn_deposit = Button(frame_btn_deposit, text="Update Data Setoran", command=update_data_borrow)
+add_btn_deposit = Button(frame_btn_deposit, text="Tambah Data Setoran", command=add_new_borrow)
+delete_btn_deposit = Button(frame_btn_deposit, text="Hapus Data Setoran", command=delete_data_borrow)
+export_btn_deposit = Button(frame_btn_deposit, text="Export ke Setoran", command=export_data_borrow)
+
+frame_btn_deposit.grid(row=4, column=0, columnspan=5, sticky="w", pady=10)
+add_btn_deposit.pack(side=LEFT, padx=5)
+update_btn_deposit.pack(side=LEFT, padx=5)
+delete_btn_deposit.pack(side=LEFT, padx=5)
+export_btn_deposit.pack(side=LEFT, padx=5)
+
 
 # Wrapper 2 - Pencarian
 q = StringVar()
@@ -609,7 +685,7 @@ ent.pack(side=LEFT, padx=6, pady=15)
 btn = Button(wrapperPencarian, text="Search", command=search)
 btn.pack(side=LEFT, padx=6, pady=15)
 cbtn = Button(wrapperPencarian, text="Clear", command=clear)
-cbtn.pack(side=LEFT, padx=6)
+cbtn.pack(side=LEFT, padx=(6, 20))
 
 # Function untuk create treeview
 
@@ -654,7 +730,8 @@ def create_tab_notebook():
 columns_trv = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
 headers_trv = ("Id", "No", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah",
                "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih", "Tanggal Pinjam")
-widths_trv = (0, 70, 120, 120, 120, 100, 120, 100, 120, 120, 100, 100, 100, 100)
+widths_trv = (0, 70, 120, 120, 120, 100, 120,
+              100, 120, 120, 100, 100, 100, 150)
 
 
 trv = create_treview(frame1, columns_trv, headers_trv,
@@ -696,6 +773,15 @@ widths_trv5 = (0, 70, 120, 120, 200)
 trv5 = create_treview(frame5, column_trv5, headers_trv5,
                       widths_trv5, bind_function=getrow_borrow)
 
+# penerapan untuk tampilkan data setoran
+column_trv_display_deposits = (0, 1, 2, 3, 4, 5, 6, 7, 8)
+headers_display_deposits = (
+    "Id", "No", "Tanggal Setor", "Bulan", "Puskesmas", "Nama", "Jumlah Setor", "Selisih", "Gagal Potong")
+width_trv_display_deposits = (0, 70, 120, 120, 120, 120, 120, 120)
+
+trv_display_deposits = create_treview(frame_display_deposits, column_trv_display_deposits,
+                                      headers_display_deposits, width_trv_display_deposits, bind_function=getrow_deposits)
+
 
 if __name__ == '__main__':
     root.title("Aplikasi Simpan Pinjam")
@@ -703,7 +789,7 @@ if __name__ == '__main__':
     root.resizable(FALSE, FALSE)
 
     try:
-        
+
         create_deposits_table()
 
         if (isFirst("BORROW")):

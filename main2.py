@@ -15,6 +15,8 @@ root = Tk()
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
+treeview = ttk.Treeview(root, columns=("ID", "Nama", "Puskesmas"), show="headings")
+
 conn = sqlite3.connect("pinjamanpuskesmas.db")
 cursor = conn.cursor()
 
@@ -56,8 +58,6 @@ def create_borrow_table():
     conn.commit()
 
 # membuat table deposits
-
-
 def create_deposits_table():
     cursor.execute("PRAGMA foreign_keys=off")
     cursor.execute("PRAGMA timezone = 'Asia/Jakarta'")
@@ -66,9 +66,9 @@ def create_deposits_table():
     CREATE TABLE DEPOSITS(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         JUMLAH_SETOR INTEGER NOT NULL,
+        JUMLAH_ANGSURN INTEGER,
         SELISIH INTEGER,
         GAGAL_POTONG INTEGER,
-        TANGGAL_SETOR TEXT NOT NULL,
         TIMESTAMP TIMESTAMP DEFAULT (datetime('now', 'localtime')),
         BORROW_ID INTEGER,
         FOREIGN KEY(BORROW_ID) REFERENCES BORROW(ID)
@@ -320,7 +320,65 @@ def add_new_borrow():
         messagebox.showerror(
             "Error", "Pastikan format data yang diupdate sudah benar")
 
+# function untuk tambah data setoran
+def add_data_deposit():
+    try:
+        # ambil data dari filed
+        jumlah_setoran = v_jumlah_setoran.get()
 
+        if not jumlah_setoran:
+            messagebox.showerror("Error", "Field Jumlah setoran harus diisi")
+            return
+        
+        if not str(jumlah_setoran):
+            messagebox.showerror("Error", "Jumlah Setoran harus berupa bilangan bulat positif")
+            return
+        
+        confirm = messagebox.askquestion(
+            "Konfirmasi", "Apakah data sudah benar ?"
+        )
+
+        if confirm == "yes":
+            query = """
+                INSERT INTO DEPOSITS
+                (JUMLAH_SETOR)
+                values (:JUMLAH_SETOR)
+                """
+            params = {
+                "JUMLAH_SETOR" : jumlah_setoran
+            }
+
+            cursor.execute(query, params)
+            conn.commit()
+            messagebox.showinfo("Info", "Data berhasil ditambahkan ! ")
+            print("Data added succesfully")
+        
+    except Exception as e:
+        print("Error : ", e)
+        messagebox.showerror("Error", "Pastikan data yang dimasukkan benar")
+
+
+# function untuk mendapatkan pokok dan bagi hasil dari table borrow
+# yang akan dipakai di function add_data_deposit
+def get_pokok_bagi_hasil(id_nasabah):
+    query = """
+        SELECT POKOK, BAGI_HASIL
+        FROM BORROW
+        WHERE ID = ?
+    """
+    cursor.execute(query, (id_nasabah,))
+    result = cursor.fetchone()
+
+    return result[0], result[1]
+
+# function calculate_jumlah_angsuran
+def calculate_jumlah_angsuran(id_nasabah):
+    pokok, bagi_hasil = get_pokok_bagi_hasil(id_nasabah)
+    jumlah_angsuran = pokok + bagi_hasil
+
+    return jumlah_angsuran
+
+# function untuk update data borrow
 def update_data_borrow():
     try:
         if messagebox.askyesno("Harap konfirmasi", "Apakah anda yakin ingin memperbarui data ini ?"):
@@ -417,6 +475,7 @@ def clear_field_borrow():
     address_entry.delete(0, 'end')
     jumlahpinjaman_entry.delete(0, 'end')
     jangkawaktu_entry.delete(0, 'end')
+    entry_jumlah_setoran.delete(0, 'end')
 
 
 def delete_data_borrow():
@@ -629,10 +688,14 @@ jangkawaktu_entry.grid(row=2, column=3, sticky="w", padx=5, pady=5)
 
 # Frame button add, update, delete pada InputDataPinjaman
 frame_btn_borrow = Frame(frameInputDataPeminjam)
-update_btn_borrow = Button(frame_btn_borrow, text="Update Data Pinjaman", command=update_data_borrow)
-add_btn_borrow = Button(frame_btn_borrow, text="Tambah Data Pinjaman", command=add_new_borrow)
-delete_btn_borrow = Button(frame_btn_borrow, text="Hapus Data Pinjaman", command=delete_data_borrow)
-export_btn_borrow = Button(frame_btn_borrow, text="Export ke Excel", command=export_data_borrow)
+update_btn_borrow = Button(
+    frame_btn_borrow, text="Update Data Pinjaman", command=update_data_borrow)
+add_btn_borrow = Button(
+    frame_btn_borrow, text="Tambah Data Pinjaman", command=add_new_borrow)
+delete_btn_borrow = Button(
+    frame_btn_borrow, text="Hapus Data Pinjaman", command=delete_data_borrow)
+export_btn_borrow = Button(
+    frame_btn_borrow, text="Export ke Excel", command=export_data_borrow)
 
 frame_btn_borrow.grid(row=4, column=0, columnspan=5, sticky="w", pady=10)
 add_btn_borrow.pack(side=LEFT, padx=5)
@@ -647,27 +710,34 @@ form_frame_deposits.grid(row=0, column=0, sticky="nsew")
 # Label dan Entry untuk Nama di Input Setoran
 label_nama_setoran = ttk.Label(form_frame_deposits, text="Nama")
 label_nama_setoran.grid(row=0, column=0, sticky="w", padx=5, pady=5)
-entry_nama_setoran = ttk.Entry(form_frame_deposits, textvariable=v_nama, state="readonly")
+entry_nama_setoran = ttk.Entry(
+    form_frame_deposits, textvariable=v_nama, state="readonly")
 entry_nama_setoran.grid(row=0, column=1, padx=5, pady=5)
 
 # Label dan Entry untuk Nama di Input Setoran
 label_puskesmas_setoran = ttk.Label(form_frame_deposits, text="Puskesmas")
 label_puskesmas_setoran.grid(row=0, column=2, sticky="w", padx=5, pady=5)
-entry_puskesmas_setoran = ttk.Entry(form_frame_deposits, textvariable=v_puskesmas, state="readonly")
+entry_puskesmas_setoran = ttk.Entry(
+    form_frame_deposits, textvariable=v_puskesmas, state="readonly")
 entry_puskesmas_setoran.grid(row=0, column=3, padx=5, pady=5)
 
 # Label dan Entry untuk Jumlah Setoran di Input Setoran
 label_jumlah_setoran = ttk.Label(form_frame_deposits, text="Jumlah Setoran")
 label_jumlah_setoran.grid(row=1, column=0, sticky="w", padx=5, pady=5)
-entry_jumlah_setoran = ttk.Entry(form_frame_deposits, textvariable=v_jumlah_setoran)
+entry_jumlah_setoran = ttk.Entry(
+    form_frame_deposits, textvariable=v_jumlah_setoran)
 entry_jumlah_setoran.grid(row=1, column=1, padx=5, pady=5)
 
 # button untuk Input Data Setoran
 frame_btn_deposit = Frame(frameInputDataSetoran)
-update_btn_deposit = Button(frame_btn_deposit, text="Update Data Setoran", command=update_data_borrow)
-add_btn_deposit = Button(frame_btn_deposit, text="Tambah Data Setoran", command=add_new_borrow)
-delete_btn_deposit = Button(frame_btn_deposit, text="Hapus Data Setoran", command=delete_data_borrow)
-export_btn_deposit = Button(frame_btn_deposit, text="Export ke Setoran", command=export_data_borrow)
+update_btn_deposit = Button(
+    frame_btn_deposit, text="Update Data Setoran", command=update_data_borrow)
+add_btn_deposit = Button(
+    frame_btn_deposit, text="Tambah Data Setoran", command=add_data_deposit)
+delete_btn_deposit = Button(
+    frame_btn_deposit, text="Hapus Data Setoran", command=delete_data_borrow)
+export_btn_deposit = Button(
+    frame_btn_deposit, text="Export ke Setoran", command=export_data_borrow)
 
 frame_btn_deposit.grid(row=4, column=0, columnspan=5, sticky="w", pady=10)
 add_btn_deposit.pack(side=LEFT, padx=5)
