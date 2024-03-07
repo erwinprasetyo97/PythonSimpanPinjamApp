@@ -15,8 +15,6 @@ root = Tk()
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
-treeview = ttk.Treeview(root, columns=("ID", "Nama", "Puskesmas"), show="headings")
-
 conn = sqlite3.connect("pinjamanpuskesmas.db")
 cursor = conn.cursor()
 
@@ -58,6 +56,8 @@ def create_borrow_table():
     conn.commit()
 
 # membuat table deposits
+
+
 def create_deposits_table():
     cursor.execute("PRAGMA foreign_keys=off")
     cursor.execute("PRAGMA timezone = 'Asia/Jakarta'")
@@ -66,7 +66,7 @@ def create_deposits_table():
     CREATE TABLE DEPOSITS(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         JUMLAH_SETOR INTEGER NOT NULL,
-        JUMLAH_ANGSURN INTEGER,
+        JUMLAH_ANGSURAN INTEGER,
         SELISIH INTEGER,
         GAGAL_POTONG INTEGER,
         TIMESTAMP TIMESTAMP DEFAULT (datetime('now', 'localtime')),
@@ -185,8 +185,6 @@ def select_based_pokok(event=None):
         print("Error fetching data:", e)
 
 # function untuk update treeview pada semua data
-
-
 def update_trv(data):
     # Membersihkan isi treeviw sebelum memasukkan data baru
     for row in trv.get_children():
@@ -194,7 +192,10 @@ def update_trv(data):
 
     # Memasukkan data baru ke dalam treeview
     for i, row in enumerate(data, start=1):
-        trv.insert("", "end", values=[i] + list(row))
+        # pastiknn urutan kolom di values sesuai dengan urutan kolom di ttk.treeview
+        values = [i] + list(row)
+        trv.insert("", "end", values=values)
+        # print(values)
 
 # function untuk update treeview pada
 
@@ -325,58 +326,106 @@ def add_data_deposit():
     try:
         # ambil data dari filed
         jumlah_setoran = v_jumlah_setoran.get()
+        timestamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
         if not jumlah_setoran:
             messagebox.showerror("Error", "Field Jumlah setoran harus diisi")
             return
         
-        if not str(jumlah_setoran):
+        if not str(jumlah_setoran).isdecimal():
             messagebox.showerror("Error", "Jumlah Setoran harus berupa bilangan bulat positif")
             return
         
-        confirm = messagebox.askquestion(
-            "Konfirmasi", "Apakah data sudah benar ?"
-        )
+        if not borrow_id:
+            messagebox.showerror("Error", "Pilih data terlebih dahulu")
+            return
+        
+        # mendapatkan nilai POKOK dan BAGI_HASIL dari table BORROW berdasarkan ID peminjaman
+        query_borrow_data = """
+            SELECT POKOK, BAGI_HASIL
+            FROM BORROW
+            WHERE ID = :BORROW_ID
+        """
 
-        if confirm == "yes":
-            query = """
-                INSERT INTO DEPOSITS
-                (JUMLAH_SETOR)
-                values (:JUMLAH_SETOR)
-                """
-            params = {
-                "JUMLAH_SETOR" : jumlah_setoran
-            }
+        params_borrow_data = {
+            "BORROW_ID" : borrow_id
+        }
 
-            cursor.execute(query, params)
-            conn.commit()
-            messagebox.showinfo("Info", "Data berhasil ditambahkan ! ")
-            print("Data added succesfully")
+        cursor.execute(query_borrow_data, params_borrow_data)
+        borrow_data = cursor.fetchone()
+
+        # menghitung nilai JUMLAH_ANGSURAN berdasarkan POKOK dan BAGI_HASIL
+        if borrow_data:
+            pokok_value = borrow_data[0]
+            bagi_hasil_value = borrow_data[1]
+            jumlah_angsuran_value = pokok_value + bagi_hasil_value
+        else:
+            # Handle jika BORROW tidak ditemukan
+            jumlah_angsuran_value = 0
+
+        # Mendapatkan nilai selisih
+        selisih_value = jumlah_angsuran_value - int(jumlah_setoran)
+
+        # Menghitung nilai GAGAL_POTONG berdasarkan SELISIH
+        gagal_potong_sebelumnya = get
+        gagal_potong_value = max(selisih_value, 0)
+
+        # setelah mendapatkan nilai JUMLAH_ANGSURAN, Anda dapat menggunakannya dalam query untuk megisi tabel DEPOSITS
+        query_insert_deposit = """
+            INSERT INTO DEPOSITS
+            (JUMLAH_SETOR, JUMLAH_ANGSURAN, SELISIH, GAGAL_POTONG, TIMESTAMP, BORROW_ID)
+            VALUES (:JUMLAH_SETOR, :JUMLAH_ANGSURAN, :SELISIH, :GAGAL_POTONG, :TIMESTAMP, :BORROW_ID)
+        """
+
+        params_insert_deposit = {
+            "JUMLAH_SETOR" : jumlah_setoran,
+            "JUMLAH_ANGSURAN" : jumlah_angsuran_value,
+            "SELISIH" : selisih_value,
+            "GAGAL_POTONG" : gagal_potong_value,
+            "TIMESTAMP": timestamp,
+            "BORROW_ID": borrow_id
+
+        }
+
+        cursor.execute(query_insert_deposit, params_insert_deposit)
+        conn.commit()
+        messagebox.showinfo("Info", "Data berhasil ditambahkan ! ")
+        print("Data added successfully")
         
     except Exception as e:
         print("Error : ", e)
-        messagebox.showerror("Error", "Pastikan data yang dimasukkan benar")
+        messagebox.showerror("Error", "Pastikan data setoran yang dimasukkan benar") 
 
 
-# function untuk mendapatkan pokok dan bagi hasil dari table borrow
-# yang akan dipakai di function add_data_deposit
-def get_pokok_bagi_hasil(id_nasabah):
+def get_previous_gagal_potong(id_nasabah):
     query = """
-        SELECT POKOK, BAGI_HASIL
-        FROM BORROW
-        WHERE ID = ?
+        SELECT GAGAL_POTONG
+        FROM DEPOSITS
+        WHERE BORROW_ID = ?
+        ORDER BT TIMESTAMP DESC
+        LIMIT 1
     """
     cursor.execute(query, (id_nasabah,))
     result = cursor.fetchone()
 
-    return result[0], result[1]
+    return result[0] if result else 0
 
-# function calculate_jumlah_angsuran
-def calculate_jumlah_angsuran(id_nasabah):
-    pokok, bagi_hasil = get_pokok_bagi_hasil(id_nasabah)
-    jumlah_angsuran = pokok + bagi_hasil
+# function untuk mendapatkan current_gagal_potong
+def calculate_current_gagal_potong(jumlah_setoran, jumlah_angsuran):
+    gagal_potong = jumlah_setoran - jumlah_angsuran
 
-    return jumlah_angsuran
+    return gagal_potong
+
+# function untuk mendapatkan total_gagal_potong
+
+
+def calculate_total_gagal_potong(id_nasabah, jumlah_setoran, jumlah_angsuran):
+    previous_gagal_potong = get_previous_gagal_potong(id_nasabah)
+    current_gagal_potong = calculate_current_gagal_potong(
+        jumlah_setoran, jumlah_angsuran)
+    total_gagal_potong = previous_gagal_potong + current_gagal_potong
+
+    return total_gagal_potong
 
 # function untuk update data borrow
 def update_data_borrow():
@@ -438,12 +487,13 @@ def update_data_borrow():
 
 
 def getrow_borrow(event):
+    global borrow_id
 
     rowid = trv.identify_row(event.y)
     item = trv.item(rowid)
 
     if 'values' in item and len(item['values']) >= 13:
-        v_id.set(item['values'][0])
+        v_id.set(item['values'][1])
         v_nama.set(item['values'][2])
         v_nip.set(item['values'][3])
         v_puskesmas.set(item['values'][4])
@@ -451,6 +501,9 @@ def getrow_borrow(event):
         v_alamat_rumah.set(item['values'][6])
         v_jumlah_pinjaman.set(item['values'][7])
         v_jangka_waktu.set(item['values'][8])
+
+        borrow_id = item['values'][1]
+        print("ID BORROW : ", borrow_id)
 
     else:
         print("Error: Insufficient values in the 'values atribute.")
@@ -514,7 +567,7 @@ def export_data_borrow():
 
         # Membuat DataFrame dari data
         df = pd.DataFrame(rows, columns=[
-            'ID', 'NAMA', 'NIP', 'PUSKESMAS', 'TANGGAL_LAHIR', 'ALAMAT', 'JUMLAH_PINJAMAN', 'JANGKA_WAKTU', 'RESIKO_KREDIT', 'BAGI_HASIL', 'POKOK', 'TERIMA_BERSIH'
+            'ID', 'NAMA', 'NIP', 'PUSKESMAS', 'TANGGAL_LAHIR', 'ALAMAT', 'JUMLAH_PINJAMAN', 'JANGKA_WAKTU', 'RESIKO_KREDIT', 'BAGI_HASIL', 'POKOK', 'TERIMA_BERSIH', 'TIMESTAMP'
         ])
 
         # Menyimpan DataFrame ke file Excel
@@ -733,7 +786,10 @@ frame_btn_deposit = Frame(frameInputDataSetoran)
 update_btn_deposit = Button(
     frame_btn_deposit, text="Update Data Setoran", command=update_data_borrow)
 add_btn_deposit = Button(
-    frame_btn_deposit, text="Tambah Data Setoran", command=add_data_deposit)
+    frame_btn_deposit,
+    text="Tambah Data Setoran",
+    command= add_data_deposit
+)
 delete_btn_deposit = Button(
     frame_btn_deposit, text="Hapus Data Setoran", command=delete_data_borrow)
 export_btn_deposit = Button(
@@ -778,7 +834,7 @@ def create_treview(frame, columns, headers, widths, bind_function=None, Mysky=No
         trv.bind('<Double 1>', bind_function)
 
     # Exclude the first column from being displayed
-    trv["displaycolumns"] = columns[1:]
+    trv["displaycolumns"] = columns[0:]
 
     scrollbar_y = Scrollbar(frame, orient="vertical", command=trv.yview)
     scrollbar_y.grid(row=0, column=1, sticky="ns")
@@ -797,10 +853,11 @@ def create_tab_notebook():
 
 
 # penerapan untuk tampilkan data semua
-columns_trv = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
-headers_trv = ("Id", "No", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah",
+columns_trv = ("No", "Id", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah",
                "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih", "Tanggal Pinjam")
-widths_trv = (0, 70, 120, 120, 120, 100, 120,
+headers_trv = ("No", "Id", "Nama", "NIP", "Puskesmas", "Tanggal Lahir", "Alamat Rumah",
+               "Jumlah Pinjaman", "Jangka Waktu", "Resiko Kredit", "Bagi Hasil", "Pokok", "Terima Bersih", "Tanggal Pinjam")
+widths_trv = (70, 0, 120, 120, 120, 100, 120,
               100, 120, 120, 100, 100, 100, 150)
 
 
@@ -812,33 +869,33 @@ trv.column("#13", anchor=CENTER)
 
 # penerapan untuk tampilkan data per Jumlah Pinjaman
 column_trv2 = (0, 1, 2, 3, 4, 5)
-headers_trv2 = ("Id", "No", "Nama", "Puskesmas",
+headers_trv2 = ("No", "Id", "Nama", "Puskesmas",
                 "Tanggal Realisasi", "Jumlah Pinjaman")
-widths_trv2 = (0, 70, 120, 120, 120, 120)
+widths_trv2 = (70, 0, 120, 120, 120, 120)
 
 trv2 = create_treview(frame2, column_trv2, headers_trv2,
                       widths_trv2, bind_function=getrow_borrow)
 
 # penerapan untuk tampilkan data per resiko kredit
 column_trv3 = (0, 1, 2, 3, 4)
-headers_trv3 = ("Id", "No", "Nama", "Puskesmas", "Resiko Kredit")
-widths_trv3 = (0, 70, 120, 120, 200)
+headers_trv3 = ("No", "Id", "Nama", "Puskesmas", "Resiko Kredit")
+widths_trv3 = (70, 0, 120, 120, 200)
 
 trv3 = create_treview(frame3, column_trv3, headers_trv3,
                       widths_trv3, bind_function=getrow_borrow)
 
 # penerapan untuk tampilkan data per bagi hasil
 column_trv4 = (0, 1, 2, 3, 4)
-headers_trv4 = ("Id", "No", "Nama", "Puskesmas", "Bagi Hasil")
-widths_trv4 = (0, 70, 120, 120, 200)
+headers_trv4 = ("No", "Id", "Nama", "Puskesmas", "Bagi Hasil")
+widths_trv4 = (70, 0, 120, 120, 200)
 
 trv4 = create_treview(frame4, column_trv4, headers_trv4,
                       widths_trv4, bind_function=getrow_borrow)
 
 # penerapan untuk tampilkan data per Sisa Pokok
 column_trv5 = (0, 1, 2, 3, 4)
-headers_trv5 = ("Id", "No", "Nama", "Puskesmas", "Pokok")
-widths_trv5 = (0, 70, 120, 120, 200)
+headers_trv5 = ("No", "Id", "Nama", "Puskesmas", "Pokok")
+widths_trv5 = (70, 70, 120, 120, 200)
 
 trv5 = create_treview(frame5, column_trv5, headers_trv5,
                       widths_trv5, bind_function=getrow_borrow)
@@ -846,8 +903,8 @@ trv5 = create_treview(frame5, column_trv5, headers_trv5,
 # penerapan untuk tampilkan data setoran
 column_trv_display_deposits = (0, 1, 2, 3, 4, 5, 6, 7, 8)
 headers_display_deposits = (
-    "Id", "No", "Tanggal Setor", "Bulan", "Puskesmas", "Nama", "Jumlah Setor", "Selisih", "Gagal Potong")
-width_trv_display_deposits = (0, 70, 120, 120, 120, 120, 120, 120)
+    "No", "Id", "Tanggal Setor", "Bulan", "Puskesmas", "Nama", "Jumlah Setor", "Selisih", "Gagal Potong")
+width_trv_display_deposits = (70, 0, 120, 120, 120, 120, 120, 120)
 
 trv_display_deposits = create_treview(frame_display_deposits, column_trv_display_deposits,
                                       headers_display_deposits, width_trv_display_deposits, bind_function=getrow_deposits)
