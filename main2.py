@@ -367,8 +367,10 @@ def add_data_deposit():
         selisih_value = jumlah_angsuran_value - int(jumlah_setoran)
 
         # Menghitung nilai GAGAL_POTONG berdasarkan SELISIH
-        gagal_potong_sebelumnya = get
-        gagal_potong_value = max(selisih_value, 0)
+        gagal_potong_sebelumnya_value = get_gagal_potong_sebelumnya(borrow_id)
+
+        # Menghitung nilai GAGAL_POTONG berdasarkan SELISIH
+        gagal_potong_value = max(abs(selisih_value), 0) + gagal_potong_sebelumnya_value
 
         # setelah mendapatkan nilai JUMLAH_ANGSURAN, Anda dapat menggunakannya dalam query untuk megisi tabel DEPOSITS
         query_insert_deposit = """
@@ -397,35 +399,29 @@ def add_data_deposit():
         messagebox.showerror("Error", "Pastikan data setoran yang dimasukkan benar") 
 
 
-def get_previous_gagal_potong(id_nasabah):
-    query = """
-        SELECT GAGAL_POTONG
-        FROM DEPOSITS
-        WHERE BORROW_ID = ?
-        ORDER BT TIMESTAMP DESC
-        LIMIT 1
-    """
-    cursor.execute(query, (id_nasabah,))
-    result = cursor.fetchone()
+def get_gagal_potong_sebelumnya(borrow_id):
+    try:
+        query = """
+            SELECT GAGAL_POTONG
+            FROM DEPOSITS
+            WHERE BORROW_ID = :BORROW_ID
+            ORDER BY TIMESTAMP DESC
+            LIMIT 1
+        """
+        params = {
+            "BORROW_ID": borrow_id
+        }
+        cursor.execute(query, params)
+        result = cursor.fetchone()
 
-    return result[0] if result else 0
+        if result:
+            return result[0]  # Mengembalikan nilai GAGAL_POTONG terakhir
+        else:
+            return 0  # Jika tidak ada data DEPOSITS terkait, mengembalikan 0
 
-# function untuk mendapatkan current_gagal_potong
-def calculate_current_gagal_potong(jumlah_setoran, jumlah_angsuran):
-    gagal_potong = jumlah_setoran - jumlah_angsuran
-
-    return gagal_potong
-
-# function untuk mendapatkan total_gagal_potong
-
-
-def calculate_total_gagal_potong(id_nasabah, jumlah_setoran, jumlah_angsuran):
-    previous_gagal_potong = get_previous_gagal_potong(id_nasabah)
-    current_gagal_potong = calculate_current_gagal_potong(
-        jumlah_setoran, jumlah_angsuran)
-    total_gagal_potong = previous_gagal_potong + current_gagal_potong
-
-    return total_gagal_potong
+    except Exception as e:
+        print("Error in get_gagal_potong_sebelumnya:", e)
+        return 0  # Mengembalikan 0 jika terjadi kesalahan
 
 # function untuk update data borrow
 def update_data_borrow():
