@@ -75,6 +75,7 @@ def create_deposits_table():
     )
     """
     cursor.execute(query)
+
     cursor.execute("PRAGMA foreign_keys=on")
     cursor.execute("PRAGMA timezone = DEFAULT")
     conn.commit()
@@ -415,7 +416,7 @@ def get_gagal_potong_sebelumnya(borrow_id):
         result = cursor.fetchone()
 
         if result:
-            return result[0]  # Mengembalikan nilai GAGAL_POTONG terakhir
+            return result[0]  # Mengembalikan nilai GAGAL_POsONG terakhir
         else:
             return 0  # Jika tidak ada data DEPOSITS terkait, mengembalikan 0
 
@@ -919,8 +920,11 @@ if __name__ == '__main__':
             create_borrow_table()
         else:
             select_all_borrow()
-
+        
+        
     except Exception as e:
         print(f"Error: {e}")
+
     root.mainloop()
+    conn.commit()
     conn.close()
