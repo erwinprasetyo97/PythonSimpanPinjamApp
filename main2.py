@@ -593,9 +593,9 @@ def search():
     try:
         q2 = q.get()
         query = """
-        SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM BORROW WHERE NAMA LIKE {} OR NIP LIKE {}
-        """.format("'%"+q2+"%'", "'%"+q2+"%'")
-        cursor.execute(query)
+        SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM BORROW WHERE NAMA LIKE ? OR NIP LIKE ?
+        """
+        cursor.execute(query, ('%' + q2 + '%', '%' + q2 + '%'))
         conn.commit()
         rows = cursor.fetchall()
         update_trv(rows)
