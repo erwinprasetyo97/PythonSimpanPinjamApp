@@ -522,7 +522,7 @@ def getrow_deposits(event):
     rowid = trv_display_deposits.identify_row(event.y)
     item = trv_display_deposits.item(rowid)
 
-    if 'values' in item and len(item['values']) >= 10:
+    if 'values' in item and len(item['values']) >= 9:
         v_id.set(item['values'][1])
         v_jumlah_setoran.set(item['values'][2])
 
