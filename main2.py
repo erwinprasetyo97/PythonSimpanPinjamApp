@@ -21,7 +21,7 @@ conn = sqlite3.connect("pinjamanpuskesmas.db")
 cursor = conn.cursor()
 
 # Atur level logging seeuai kebutuhan
-logging.basicConfig(level = logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 # Create a notebook baris pertama
 notebook = ttk.Notebook(root)
@@ -61,6 +61,8 @@ def create_borrow_table():
     conn.commit()
 
 # membuat table deposits
+
+
 def create_deposits_table():
     cursor.execute("PRAGMA journal_mode = WAL")
     cursor.execute("PRAGMA foreign_keys=off")
@@ -86,14 +88,18 @@ def create_deposits_table():
 
 
 def isFirst(table_name):
-    query = '''SELECT count(name) FROM sqlite_master WHERE type='table' AND name='{}' '''.format(
-        table_name)
-    cursor.execute(query)
-    conn.commit()
-    if cursor.fetchone()[0] == 1:
-        return False
-    else:
-        return True
+    try:
+        query = '''SELECT count(name) FROM sqlite_master WHERE type='table' AND name='{}' '''.format(
+            table_name)
+        cursor.execute(query)
+        result = cursor.fetchone()
+        if result and result[0] == 1:
+            return False  # Tabel sudah ada
+        else:
+            return True  # Tabel belum ada
+    except Exception as e:
+        print("Error:", e)
+        return True  # Tabel belum ada karena ada kesalahan saat menjalankan query
 
 
 def is_valid_date(date_str):
@@ -104,6 +110,8 @@ def is_valid_date(date_str):
         return FALSE
 
 # query for display all data
+
+
 def select_all_borrow():
     try:
         # Menentukan kolom yang ingin ditampilkan
@@ -116,6 +124,8 @@ def select_all_borrow():
         print("Error fetching data:", e)
 
 # query for display data based "jumlah_pinjaman"
+
+
 def select_based_loans(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
@@ -132,6 +142,8 @@ def select_based_loans(event=None):
         print("Error fetching data:", e)
 
 # query for display data based "Resiko Kredit"
+
+
 def select_based_credit_risk(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
@@ -148,6 +160,8 @@ def select_based_credit_risk(event=None):
         print("Error fetching data:", e)
 
 # query for display data based "Bagi Hasil"
+
+
 def select_based_profit_sharing(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
@@ -164,6 +178,8 @@ def select_based_profit_sharing(event=None):
         print("Error fetching data:", e)
 
 # query for display data based "Pokok"
+
+
 def select_based_pokok(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
@@ -180,6 +196,8 @@ def select_based_pokok(event=None):
         print("Error fetching data:", e)
 
 # function untuk update treeview pada semua data
+
+
 def update_trv(data):
     # Membersihkan isi treeviw sebelum memasukkan data baru
     for row in trv.get_children():
@@ -193,6 +211,8 @@ def update_trv(data):
         # print(values)
 
 # function untuk update treeview pada
+
+
 def update_trv2(data):
     # Membersihkan isi treeviw sebelum memasukkan data baru
     for row in trv2.get_children():
@@ -203,6 +223,8 @@ def update_trv2(data):
         trv2.insert("", "end", values=[i] + list(row))
 
 # function untuk update treeview pada
+
+
 def update_trv3(data):
     # Membersihkan isi treeviw sebelum memasukkan data baru
     for row in trv3.get_children():
@@ -213,6 +235,8 @@ def update_trv3(data):
         trv3.insert("", "end", values=[i] + list(row))
 
 # function untuk update treview berdasarkan bagi hasil
+
+
 def update_trv4(data):
     # membersihkan isi treeview sebelum memasukkan data baru
     for row in trv4.get_children():
@@ -223,6 +247,8 @@ def update_trv4(data):
         trv4.insert("", "end", values=[i] + list(row))
 
 # function untuk update treeview berdasarkan pokok
+
+
 def update_trv5(data):
     # membersihkan isi treeview sebelum memasukkan data baru
     for row in trv5.get_children():
@@ -233,11 +259,13 @@ def update_trv5(data):
         trv5.insert("", "end", values=[i] + list(row))
 
 # function untuk update treeview data setoran
+
+
 def update_trv_deposit():
-    # Hapus semua itm di treeview
+    # Hapus semua item di treeview
     for item in trv_display_deposits.get_children():
         trv_display_deposits.delete(item)
-    
+
     # Query untuk mengambil data dari table DEPOSITS
     query_select_deposits = """
         SELECT ID, TIMESTAMP, BORROW_ID, JUMLAH_SETOR, SELISIH, GAGAL_POTONG
@@ -253,7 +281,7 @@ def update_trv_deposit():
         trv_display_deposits.insert("", "end", values=(index,) + row)
 
     # commit setelah update treeview
-    conn.commit()
+    # conn.commit()
 
 
 # function untuk menambahkan data ke dalam table BORROW
@@ -333,6 +361,8 @@ def add_new_borrow():
             "Error", "Pastikan format data yang diupdate sudah benar")
 
 # function untuk tambah data setoran
+
+
 def add_data_deposit():
     try:
         # ambil data dari filed
@@ -342,15 +372,16 @@ def add_data_deposit():
         if not jumlah_setoran:
             messagebox.showerror("Error", "Field Jumlah setoran harus diisi")
             return
-        
+
         if not str(jumlah_setoran).isdecimal():
-            messagebox.showerror("Error", "Jumlah Setoran harus berupa bilangan bulat positif")
+            messagebox.showerror(
+                "Error", "Jumlah Setoran harus berupa bilangan bulat positif")
             return
-        
+
         if not borrow_id:
             messagebox.showerror("Error", "Pilih data terlebih dahulu")
             return
-        
+
         # mendapatkan nilai POKOK dan BAGI_HASIL dari table BORROW berdasarkan ID peminjaman
         query_borrow_data = """
             SELECT POKOK, BAGI_HASIL
@@ -359,7 +390,7 @@ def add_data_deposit():
         """
 
         params_borrow_data = {
-            "BORROW_ID" : borrow_id
+            "BORROW_ID": borrow_id
         }
 
         cursor.execute(query_borrow_data, params_borrow_data)
@@ -381,7 +412,8 @@ def add_data_deposit():
         gagal_potong_sebelumnya_value = get_gagal_potong_sebelumnya(borrow_id)
 
         # Menghitung nilai GAGAL_POTONG berdasarkan SELISIH
-        gagal_potong_value = max(abs(selisih_value), 0) + gagal_potong_sebelumnya_value
+        gagal_potong_value = max(abs(selisih_value), 0) + \
+            gagal_potong_sebelumnya_value
 
         # setelah mendapatkan nilai JUMLAH_ANGSURAN, Anda dapat menggunakannya dalam query untuk megisi tabel DEPOSITS
         query_insert_deposit = """
@@ -391,10 +423,10 @@ def add_data_deposit():
         """
 
         params_insert_deposit = {
-            "JUMLAH_SETOR" : jumlah_setoran,
-            "JUMLAH_ANGSURAN" : jumlah_angsuran_value,
-            "SELISIH" : selisih_value,
-            "GAGAL_POTONG" : gagal_potong_value,
+            "JUMLAH_SETOR": jumlah_setoran,
+            "JUMLAH_ANGSURAN": jumlah_angsuran_value,
+            "SELISIH": selisih_value,
+            "GAGAL_POTONG": gagal_potong_value,
             "TIMESTAMP": timestamp,
             "BORROW_ID": borrow_id
 
@@ -406,12 +438,12 @@ def add_data_deposit():
         print("Data added successfully")
         update_trv_deposit()
         logging.info("Data deposit berhasil ditambahkan")
-        
+
     except Exception as e:
         logging.error(f"Erorr during add_data_deposit: {e}")
-        conn.rollback() # kembalikan perubahan jika terjadi kesalahan
+        conn.rollback()  # kembalikan perubahan jika terjadi kesalahan
         print("Error during commit : ", e)
-        messagebox.showerror("Error", "Gagal menyimpan perubahan ke database") 
+        messagebox.showerror("Error", "Gagal menyimpan perubahan ke database")
 
 
 def get_gagal_potong_sebelumnya(borrow_id):
@@ -439,6 +471,8 @@ def get_gagal_potong_sebelumnya(borrow_id):
         return 0  # Mengembalikan 0 jika terjadi kesalahan
 
 # function untuk update data borrow
+
+
 def update_data_borrow():
     try:
         if messagebox.askyesno("Harap konfirmasi", "Apakah anda yakin ingin memperbarui data ini ?"):
@@ -495,6 +529,8 @@ def update_data_borrow():
             "Error", "Pastikan format data yang diupdate sudah benar")
 
 # function untuk menampilkan data pinjaman dari database kedalam treeview
+
+
 def getrow_borrow(event):
     global borrow_id
 
@@ -561,6 +597,8 @@ def delete_data_borrow():
         print("Error :", e)
 
 # untuk export data to excel
+
+
 def export_data_borrow():
     try:
         # Menampilkan dialog untuk memilih lokasi penyimpanan file Excel
@@ -796,7 +834,7 @@ update_btn_deposit = Button(
 add_btn_deposit = Button(
     frame_btn_deposit,
     text="Tambah Data Setoran",
-    command= add_data_deposit
+    command=add_data_deposit
 )
 delete_btn_deposit = Button(
     frame_btn_deposit, text="Hapus Data Setoran", command=delete_data_borrow)
@@ -909,10 +947,10 @@ trv5 = create_treview(frame5, column_trv5, headers_trv5,
                       widths_trv5, bind_function=getrow_borrow)
 
 # penerapan untuk tampilkan data setoran
-column_trv_display_deposits = (0, 1, 2, 3, 4, 5, 6, 7, 8)
+column_trv_display_deposits = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 headers_display_deposits = (
-    "No", "Id", "Tanggal Setor", "Bulan", "Puskesmas", "Nama", "Jumlah Setor", "Selisih", "Gagal Potong")
-width_trv_display_deposits = (70, 0, 120, 120, 120, 120, 120, 120)
+    "No", "Id", "Tanggal Setor", "Bulan", "Puskesmas", "Nama", "Jumlah Setor", "Selisih", "Gagal Potong", "Sisa Pokok")
+width_trv_display_deposits = (70, 0, 120, 120, 120, 120, 120, 120, 120)
 
 trv_display_deposits = create_treview(frame_display_deposits, column_trv_display_deposits,
                                       headers_display_deposits, width_trv_display_deposits, bind_function=getrow_deposits)
@@ -925,17 +963,22 @@ if __name__ == '__main__':
 
     try:
 
-        create_deposits_table()
+        # Membuat tabel DEPOSITS jika belum ada
+        if (isFirst("DEPOSITS")):
+            create_deposits_table()
 
+        # Membuat tabel BORROW jika belum ada
         if (isFirst("BORROW")):
             create_borrow_table()
         else:
+            # Memilih semua data dari tabel BORROW
             select_all_borrow()
-        
-        # panggil fungsi untuk mengisi treeview saat aplikasi dibuka
+
+        # Panggil fungsi untuk mengisi treeview saat aplikasi dibuka
         update_trv_deposit()
+
         root.mainloop()
-        
+
     except Exception as e:
         print(f"Error: {e}")
 
