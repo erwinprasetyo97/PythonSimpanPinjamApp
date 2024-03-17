@@ -689,17 +689,37 @@ frameInputDataPeminjam = ttk.Frame(notebook2, width=400, height=200)
 frameInputDataSetoran = ttk.Frame(notebook2, width=400, height=200)
 
 
-# frame notbook untuk inputData Pinjaman
+# Frame configuration for frame1
 frame1.grid_rowconfigure(0, weight=1, minsize=100)
 frame1.grid_columnconfigure(0, weight=1, minsize=100)
+
+# Frame configuration for frame2
+frame2.grid_rowconfigure(0, weight=1, minsize=100)
+frame2.grid_columnconfigure(0, weight=1, minsize=100)
+
+# Frame configuration for frame 3
+frame3.grid_rowconfigure(0, weight=1, minsize=100)
+frame3.grid_columnconfigure(0, weight=1, minsize=100)
+
+# Frame configuration for frame 4
+frame4.grid_rowconfigure(0, weight=1, minsize=100)
+frame4.grid_columnconfigure(0, weight=1, minsize=100)
+
+# Frame configuration for frame 5
+frame5.grid_rowconfigure(0, weight=1, minsize=100)
+frame5.grid_columnconfigure(0, weight=1, minsize=100)
+
+frame_display_deposits.grid_rowconfigure(0, weight=1, minsize=100)
+frame_display_deposits.grid_columnconfigure(0, weight=1, minsize=100)
+
+# frame notbook untuk inputData Pinjaman
 frame1.grid(row=0, column=0, sticky="nsew", padx=(10, 20), pady=10)
 frame2.grid(row=0, column=0, sticky="nsew")
 frame3.grid(row=0, column=0, sticky="nsew")
 frame4.grid(row=0, column=0, sticky="nsew")
 frame5.grid(row=0, column=0, sticky="nsew")
+frame_display_deposits.grid(row=0, column=0, sticky="nsew", padx=(10.20), pady=10)
 
-# frame notebook untuk menampilkan inputDataSetoran
-frame_display_deposits.grid(row=0, column=0, sticky="nsew")
 
 frameInputDataPeminjam.grid(row=0, column=0, sticky="nsew")
 frameInputDataSetoran.grid(row=0, column=0, sticky="nsew")
@@ -890,6 +910,8 @@ def create_treview(frame, columns, headers, widths, bind_function=None, Mysky=No
     scrollbar_x.grid(row=1, column=0, sticky="ew")
     trv.configure(xscrollcommand=scrollbar_x.set)
 
+    # frame.columnconfigure(0, weight=1)
+
     return trv
 
 
@@ -950,7 +972,7 @@ trv5 = create_treview(frame5, column_trv5, headers_trv5,
 column_trv_display_deposits = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 headers_display_deposits = (
     "No", "Id", "Tanggal Setor", "Bulan", "Puskesmas", "Nama", "Jumlah Setor", "Selisih", "Gagal Potong", "Sisa Pokok")
-width_trv_display_deposits = (70, 0, 120, 120, 120, 120, 120, 120, 120)
+width_trv_display_deposits = (70, 0, 120, 120, 120, 120, 120, 120, 120, 120)
 
 trv_display_deposits = create_treview(frame_display_deposits, column_trv_display_deposits,
                                       headers_display_deposits, width_trv_display_deposits, bind_function=getrow_deposits)
