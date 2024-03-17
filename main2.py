@@ -75,6 +75,7 @@ def create_deposits_table():
         JUMLAH_ANGSURAN INTEGER,
         SELISIH INTEGER,
         GAGAL_POTONG INTEGER,
+        SISA_POKOK INTEGER,
         TIMESTAMP TIMESTAMP DEFAULT (datetime('now', 'localtime')),
         BORROW_ID INTEGER,
         FOREIGN KEY(BORROW_ID) REFERENCES BORROW(ID)
@@ -129,7 +130,7 @@ def select_all_borrow():
 def select_based_loans(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
-        columns_to_select = ['ID', 'NAMA', 'PUSKESMAS',
+        columns_to_select = ['NAMA', 'PUSKESMAS',
                              'TIMESTAMP', 'JUMLAH_PINJAMAN']
 
         # Membuat pernyataan SQL SELECT
@@ -147,7 +148,7 @@ def select_based_loans(event=None):
 def select_based_credit_risk(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
-        columns_to_select = ['ID', 'NAMA', 'PUSKESMAS', 'RESIKO_KREDIT']
+        columns_to_select = ['NAMA', 'PUSKESMAS', 'RESIKO_KREDIT']
 
         # Membuat pernyataan SQL SELECT
         query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
@@ -165,7 +166,7 @@ def select_based_credit_risk(event=None):
 def select_based_profit_sharing(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
-        columns_to_select = ['ID', 'NAMA', 'PUSKESMAS', 'BAGI_HASIL']
+        columns_to_select = ['NAMA', 'PUSKESMAS', 'BAGI_HASIL']
 
         # membuat pernyataan SQL SELECT
         query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
@@ -183,7 +184,7 @@ def select_based_profit_sharing(event=None):
 def select_based_pokok(event=None):
     try:
         # Menentukan kolom yang ingin ditampilkan
-        columns_to_select = ['ID', 'NAMA', 'PUSKESMAS', 'POKOK']
+        columns_to_select = ['NAMA', 'PUSKESMAS', 'POKOK']
 
         # membuat pernyataan SQL SELECT
         query = f"SELECT {', '.join(columns_to_select)} FROM BORROW;"
@@ -361,7 +362,6 @@ def add_new_borrow():
             "Error", "Pastikan format data yang diupdate sudah benar")
 
 # function untuk tambah data setoran
-
 
 def add_data_deposit():
     try:
@@ -709,12 +709,13 @@ frame4.grid_columnconfigure(0, weight=1, minsize=100)
 frame5.grid_rowconfigure(0, weight=1, minsize=100)
 frame5.grid_columnconfigure(0, weight=1, minsize=100)
 
+# Frame configuration for frame_display_deposits
 frame_display_deposits.grid_rowconfigure(0, weight=1, minsize=100)
 frame_display_deposits.grid_columnconfigure(0, weight=1, minsize=100)
 
 # frame notbook untuk inputData Pinjaman
 frame1.grid(row=0, column=0, sticky="nsew", padx=(10, 20), pady=10)
-frame2.grid(row=0, column=0, sticky="nsew")
+frame2.grid(row=0, column=0, sticky="nsew", padx=(10, 20), pady=10)
 frame3.grid(row=0, column=0, sticky="nsew")
 frame4.grid(row=0, column=0, sticky="nsew")
 frame5.grid(row=0, column=0, sticky="nsew")
@@ -881,7 +882,6 @@ cbtn.pack(side=LEFT, padx=(6, 20))
 
 # Function untuk create treeview
 
-
 def create_treview(frame, columns, headers, widths, bind_function=None, Mysky=None):
     create_tab_notebook()
     trv = ttk.Treeview(frame, column=columns, show="headings", height=12)
@@ -936,34 +936,34 @@ trv.column("#12", anchor=CENTER)
 trv.column("#13", anchor=CENTER)
 
 # penerapan untuk tampilkan data per Jumlah Pinjaman
-column_trv2 = (0, 1, 2, 3, 4, 5)
-headers_trv2 = ("No", "Id", "Nama", "Puskesmas",
+column_trv2 = (0, 2, 3, 4, 5)
+headers_trv2 = ("No", "Nama", "Puskesmas",
                 "Tanggal Realisasi", "Jumlah Pinjaman")
-widths_trv2 = (70, 0, 120, 120, 120, 120)
+widths_trv2 = (70, 120, 120, 120, 120)
 
 trv2 = create_treview(frame2, column_trv2, headers_trv2,
                       widths_trv2, bind_function=getrow_borrow)
 
 # penerapan untuk tampilkan data per resiko kredit
-column_trv3 = (0, 1, 2, 3, 4)
-headers_trv3 = ("No", "Id", "Nama", "Puskesmas", "Resiko Kredit")
-widths_trv3 = (70, 0, 120, 120, 200)
+column_trv3 = (0, 2, 3, 4)
+headers_trv3 = ("No", "Nama", "Puskesmas", "Resiko Kredit")
+widths_trv3 = (70, 120, 120, 200)
 
 trv3 = create_treview(frame3, column_trv3, headers_trv3,
                       widths_trv3, bind_function=getrow_borrow)
 
 # penerapan untuk tampilkan data per bagi hasil
-column_trv4 = (0, 1, 2, 3, 4)
-headers_trv4 = ("No", "Id", "Nama", "Puskesmas", "Bagi Hasil")
-widths_trv4 = (70, 0, 120, 120, 200)
+column_trv4 = (0, 2, 3, 4)
+headers_trv4 = ("No", "Nama", "Puskesmas", "Bagi Hasil")
+widths_trv4 = (70, 120, 120, 200)
 
 trv4 = create_treview(frame4, column_trv4, headers_trv4,
                       widths_trv4, bind_function=getrow_borrow)
 
 # penerapan untuk tampilkan data per Sisa Pokok
-column_trv5 = (0, 1, 2, 3, 4)
-headers_trv5 = ("No", "Id", "Nama", "Puskesmas", "Pokok")
-widths_trv5 = (70, 70, 120, 120, 200)
+column_trv5 = (0, 2, 3, 4)
+headers_trv5 = ("No", "Nama", "Puskesmas", "Pokok")
+widths_trv5 = (70, 120, 120, 200)
 
 trv5 = create_treview(frame5, column_trv5, headers_trv5,
                       widths_trv5, bind_function=getrow_borrow)
