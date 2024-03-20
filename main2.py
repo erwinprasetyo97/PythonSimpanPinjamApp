@@ -362,7 +362,6 @@ def add_new_borrow():
             "Error", "Pastikan format data yang diupdate sudah benar")
 
 # function untuk tambah data setoran
-
 def add_data_deposit():
     try:
         # ambil data dari filed
@@ -384,7 +383,7 @@ def add_data_deposit():
 
         # mendapatkan nilai POKOK dan BAGI_HASIL dari table BORROW berdasarkan ID peminjaman
         query_borrow_data = """
-            SELECT POKOK, BAGI_HASIL
+            SELECT POKOK, BAGI_HASIL, JUMLAH_PINJAMAN
             FROM BORROW
             WHERE ID = :BORROW_ID
         """
@@ -401,9 +400,11 @@ def add_data_deposit():
             pokok_value = borrow_data[0]
             bagi_hasil_value = borrow_data[1]
             jumlah_angsuran_value = pokok_value + bagi_hasil_value
+            jumlah_pinjaman = borrow_data[2]
         else:
             # Handle jika BORROW tidak ditemukan
             jumlah_angsuran_value = 0
+            jumlah_pinjaman = 0
 
         # Mendapatkan nilai selisih
         selisih_value = jumlah_angsuran_value - int(jumlah_setoran)
@@ -412,21 +413,33 @@ def add_data_deposit():
         gagal_potong_sebelumnya_value = get_gagal_potong_sebelumnya(borrow_id)
 
         # Menghitung nilai GAGAL_POTONG berdasarkan SELISIH
-        gagal_potong_value = max(abs(selisih_value), 0) + \
-            gagal_potong_sebelumnya_value
+        gagal_potong_value = selisih_value + gagal_potong_sebelumnya_value
+        
+        # Mendapatkan nilai sisa pokok sebelumnya
+        sisa_pokok_sebelumnya_value = get_sisa_pokok_sebelumnya(borrow_id)
 
-        # setelah mendapatkan nilai JUMLAH_ANGSURAN, Anda dapat menggunakannya dalam query untuk megisi tabel DEPOSITS
+        # Menghitung nilai SISA_POKOK
+        if gagal_potong_sebelumnya_value == 0:
+            sisa_pokok_value = jumlah_pinjaman - pokok_value
+        else:
+            sisa_pokok_value = sisa_pokok_sebelumnya_value - pokok_value + gagal_potong_sebelumnya_value
+
+        # # Menghitung sisa pokok setelah penyetoran
+        # sisa_pokok_value = sisa_pokok_sebelumnya_value - pokok_value + max(gagal_potong_value, 0)
+
+        # setelah mendapatkan nilai JUMLAH_ANGSURAN, Anda dapat menggunakannya dalam query untuk mengisi tabel DEPOSITS
         query_insert_deposit = """
             INSERT INTO DEPOSITS
-            (JUMLAH_SETOR, JUMLAH_ANGSURAN, SELISIH, GAGAL_POTONG, TIMESTAMP, BORROW_ID)
-            VALUES (:JUMLAH_SETOR, :JUMLAH_ANGSURAN, :SELISIH, :GAGAL_POTONG, :TIMESTAMP, :BORROW_ID)
+            (JUMLAH_SETOR, JUMLAH_ANGSURAN, SELISIH, GAGAL_POTONG, SISA_POKOK, TIMESTAMP, BORROW_ID)
+            VALUES (:JUMLAH_SETOR, :JUMLAH_ANGSURAN, :SELISIH, :GAGAL_POTONG, :SISA_POKOK, :TIMESTAMP, :BORROW_ID)
         """
 
         params_insert_deposit = {
             "JUMLAH_SETOR": jumlah_setoran,
             "JUMLAH_ANGSURAN": jumlah_angsuran_value,
             "SELISIH": selisih_value,
-            "GAGAL_POTONG": gagal_potong_value,
+            "GAGAL_POTONG": 0,
+            "SISA_POKOK": sisa_pokok_value,
             "TIMESTAMP": timestamp,
             "BORROW_ID": borrow_id
 
@@ -470,8 +483,34 @@ def get_gagal_potong_sebelumnya(borrow_id):
         print("Error in get_gagal_potong_sebelumnya:", e)
         return 0  # Mengembalikan 0 jika terjadi kesalahan
 
-# function untuk update data borrow
 
+def get_sisa_pokok_sebelumnya(borrow_id):
+    try:
+        query = """
+            SELECT JUMLAH_PINJAMAN - POKOK + COALESCE(GAGAL_POTONG, 0)
+            FROM DEPOSITS
+            JOIN BORROW ON DEPOSITS.BORROW_ID = BORROW.ID
+            WHERE BORROW_ID = :BORROW_ID
+            ORDER BY TIMESTAMP DESC
+            LIMIT 1
+        """
+        params = {
+            "BORROW_ID": borrow_id
+        }
+        cursor.execute(query, params)
+        result = cursor.fetchone()
+
+        if result is not None:
+            # Mengembalikan nilai sisa pokok jika hasil tidak None
+            return result[0]
+        else:
+            return 0  # Jika hasil query None, kembalikan nilai default 0
+
+    except Exception as e:
+        print("Error in get_sisa_pokok_sebelumnya:", e)
+        return 0  # Jika terjadi kesalahan, kembalikan nilai default 0
+    
+# function untuk update data borrow
 
 def update_data_borrow():
     try:
@@ -551,7 +590,7 @@ def getrow_borrow(event):
         print("ID BORROW : ", borrow_id)
 
     else:
-        print("Error: Insufficient values in the 'values atribute.")
+        print("Error: Insufficient values in the 'valuesf atribute.")
 
 
 def getrow_deposits(event):
@@ -719,7 +758,8 @@ frame2.grid(row=0, column=0, sticky="nsew", padx=(10, 20), pady=10)
 frame3.grid(row=0, column=0, sticky="nsew")
 frame4.grid(row=0, column=0, sticky="nsew")
 frame5.grid(row=0, column=0, sticky="nsew")
-frame_display_deposits.grid(row=0, column=0, sticky="nsew", padx=(10.20), pady=10)
+frame_display_deposits.grid(
+    row=0, column=0, sticky="nsew", padx=(10.20), pady=10)
 
 
 frameInputDataPeminjam.grid(row=0, column=0, sticky="nsew")
@@ -881,6 +921,7 @@ cbtn = Button(wrapperPencarian, text="Clear", command=clear)
 cbtn.pack(side=LEFT, padx=(6, 20))
 
 # Function untuk create treeview
+
 
 def create_treview(frame, columns, headers, widths, bind_function=None, Mysky=None):
     create_tab_notebook()
