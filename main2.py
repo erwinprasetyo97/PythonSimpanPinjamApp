@@ -422,7 +422,7 @@ def add_data_deposit():
         if gagal_potong_sebelumnya_value == 0:
             sisa_pokok_value = jumlah_pinjaman - pokok_value
         else:
-            sisa_pokok_value = sisa_pokok_sebelumnya_value - pokok_value + gagal_potong_sebelumnya_value
+            sisa_pokok_value = sisa_pokok_sebelumnya_value - pokok_value + gagal_potong_value
 
         # setelah mendapatkan nilai JUMLAH_ANGSURAN, Anda dapat menggunakannya dalam query untuk mengisi tabel DEPOSITS
         query_insert_deposit = """
@@ -484,9 +484,8 @@ def get_gagal_potong_sebelumnya(borrow_id):
 def get_sisa_pokok_sebelumnya(borrow_id):
     try:
         query = """
-            SELECT JUMLAH_PINJAMAN - POKOK + COALESCE(GAGAL_POTONG, 0)
+            SELECT SISA_POKOK
             FROM DEPOSITS
-            JOIN BORROW ON DEPOSITS.BORROW_ID = BORROW.ID
             WHERE BORROW_ID = :BORROW_ID
             ORDER BY TIMESTAMP DESC
             LIMIT 1
