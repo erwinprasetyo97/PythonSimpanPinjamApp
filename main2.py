@@ -424,9 +424,6 @@ def add_data_deposit():
         else:
             sisa_pokok_value = sisa_pokok_sebelumnya_value - pokok_value + gagal_potong_sebelumnya_value
 
-        # # Menghitung sisa pokok setelah penyetoran
-        # sisa_pokok_value = sisa_pokok_sebelumnya_value - pokok_value + max(gagal_potong_value, 0)
-
         # setelah mendapatkan nilai JUMLAH_ANGSURAN, Anda dapat menggunakannya dalam query untuk mengisi tabel DEPOSITS
         query_insert_deposit = """
             INSERT INTO DEPOSITS
