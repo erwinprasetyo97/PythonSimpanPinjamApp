@@ -438,7 +438,7 @@ def add_data_deposit():
             "JUMLAH_SETOR": jumlah_setoran,
             "JUMLAH_ANGSURAN": jumlah_angsuran_value,
             "SELISIH": selisih_value,
-            "GAGAL_POTONG": 0,
+            "GAGAL_POTONG": gagal_potong_value,
             "SISA_POKOK": sisa_pokok_value,
             "TIMESTAMP": timestamp,
             "BORROW_ID": borrow_id
