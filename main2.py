@@ -10,6 +10,7 @@ from tkinter import filedialog
 from datetime import datetime
 from tkinter.ttk import Notebook, Style
 import logging
+import calendar
 
 
 root = Tk()
@@ -259,8 +260,21 @@ def update_trv5(data):
     for i, row in enumerate(data, start=1):
         trv5.insert("", "end", values=[i] + list(row))
 
+bulan_dict = {
+    'January': 'Januari',
+    'February': 'Februari',
+    'March': 'Maret',
+    'April': 'April',
+    'May': 'Mei',
+    'June': 'Juni',
+    'July': 'Juli',
+    'August': 'Agustus',
+    'September': 'September',
+    'October': 'Oktober',
+    'November': 'November',
+    'December': 'Desember'
+}
 # function untuk update treeview data setoran
-
 
 def update_trv_deposit():
     # Hapus semua item di treeview
@@ -269,17 +283,37 @@ def update_trv_deposit():
 
     # Query untuk mengambil data dari table DEPOSITS
     query_select_deposits = """
-        SELECT ID, TIMESTAMP, BORROW_ID, JUMLAH_SETOR, SELISIH, GAGAL_POTONG
-        FROM DEPOSITS
+        SELECT
+            DEPOSITS.ID,
+            DEPOSITS.TIMESTAMP,
+            BORROW.PUSKESMAS,
+            BORROW.NAMA,
+            DEPOSITS.JUMLAH_SETOR,
+            DEPOSITS.SELISIH,
+            DEPOSITS.GAGAL_POTONG,
+            DEPOSITS.SISA_POKOK
+        FROM
+            DEPOSITS
+        JOIN
+            BORROW ON DEPOSITS.BORROW_ID = BORROW.ID
     """
 
     cursor.execute(query_select_deposits)
     rows = cursor.fetchall()
-    print(rows)
+    # print(rows)
 
     # Isi treeview dengan data
     for index, row in enumerate(rows, start=1):
-        trv_display_deposits.insert("", "end", values=(index,) + row)
+        bulan_setor = None
+        if row[1] is not None:
+            try:
+                timestamp = datetime.strptime(row[1], '%d-%m-%Y %H:%M:%S')
+                bulan_inggris = calendar.month_name[int(timestamp.strftime('%m'))]
+                bulan_setor = bulan_dict.get(bulan_inggris, bulan_inggris)
+            except ValueError:
+                pass
+
+        trv_display_deposits.insert("", "end", values=(index, row[0], row[1], bulan_setor, row[2], row[3], row[4], row[5], row[6], row[7]))
 
     # commit setelah update treeview
     # conn.commit()
