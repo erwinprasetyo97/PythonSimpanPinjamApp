@@ -11,6 +11,8 @@ from datetime import datetime
 from tkinter.ttk import Notebook, Style
 import logging
 import calendar
+from openpyxl import Workbook
+from tkinter import filedialog
 
 
 root = Tk()
@@ -20,6 +22,9 @@ root.grid_columnconfigure(0, weight=1)
 conn = sqlite3.connect("pinjamanpuskesmas.db")
 # conn.set_trace_callback(print)
 cursor = conn.cursor()
+
+is_searching_borrow = False
+is_searching_deposit = False
 
 # Atur level logging seeuai kebutuhan
 logging.basicConfig(level=logging.DEBUG)
@@ -197,6 +202,32 @@ def select_based_pokok(event=None):
     except Exception as e:
         print("Error fetching data:", e)
 
+# query for display deposit data
+def select_based_deposit(event=None):
+    try:
+        query_select_deposits = """
+            SELECT
+                DEPOSITS.ID,
+                DEPOSITS.TIMESTAMP,
+                BORROW.PUSKESMAS,
+                BORROW.NAMA,
+                DEPOSITS.JUMLAH_SETOR,
+                DEPOSITS.SELISIH,
+                DEPOSITS.GAGAL_POTONG,
+                DEPOSITS.SISA_POKOK
+            FROM
+                DEPOSITS
+            JOIN
+                BORROW ON DEPOSITS.BORROW_ID = BORROW.ID
+        """
+
+        cursor.execute(query_select_deposits)
+        rows = cursor.fetchall()
+
+        update_trv_deposit(rows)
+    except Exception as e:
+        print("Error fetching data: ", e)
+
 # function untuk update treeview pada semua data
 
 
@@ -260,6 +291,7 @@ def update_trv5(data):
     for i, row in enumerate(data, start=1):
         trv5.insert("", "end", values=[i] + list(row))
 
+
 bulan_dict = {
     'January': 'Januari',
     'February': 'Februari',
@@ -276,31 +308,11 @@ bulan_dict = {
 }
 # function untuk update treeview data setoran
 
-def update_trv_deposit():
+
+def update_trv_deposit(rows):
     # Hapus semua item di treeview
     for item in trv_display_deposits.get_children():
         trv_display_deposits.delete(item)
-
-    # Query untuk mengambil data dari table DEPOSITS
-    query_select_deposits = """
-        SELECT
-            DEPOSITS.ID,
-            DEPOSITS.TIMESTAMP,
-            BORROW.PUSKESMAS,
-            BORROW.NAMA,
-            DEPOSITS.JUMLAH_SETOR,
-            DEPOSITS.SELISIH,
-            DEPOSITS.GAGAL_POTONG,
-            DEPOSITS.SISA_POKOK
-        FROM
-            DEPOSITS
-        JOIN
-            BORROW ON DEPOSITS.BORROW_ID = BORROW.ID
-    """
-
-    cursor.execute(query_select_deposits)
-    rows = cursor.fetchall()
-    # print(rows)
 
     # Isi treeview dengan data
     for index, row in enumerate(rows, start=1):
@@ -308,12 +320,14 @@ def update_trv_deposit():
         if row[1] is not None:
             try:
                 timestamp = datetime.strptime(row[1], '%d-%m-%Y %H:%M:%S')
-                bulan_inggris = calendar.month_name[int(timestamp.strftime('%m'))]
+                bulan_inggris = calendar.month_name[int(
+                    timestamp.strftime('%m'))]
                 bulan_setor = bulan_dict.get(bulan_inggris, bulan_inggris)
             except ValueError:
                 pass
 
-        trv_display_deposits.insert("", "end", values=(index, row[0], row[1], bulan_setor, row[2], row[3], row[4], row[5], row[6], row[7]))
+        trv_display_deposits.insert("", "end", values=(
+            index, row[0], row[1], bulan_setor, row[2], row[3], row[4], row[5], row[6], row[7]))
 
     # commit setelah update treeview
     # conn.commit()
@@ -396,6 +410,8 @@ def add_new_borrow():
             "Error", "Pastikan format data yang diupdate sudah benar")
 
 # function untuk tambah data setoran
+
+
 def add_data_deposit():
     try:
         # ambil data dari filed
@@ -448,7 +464,7 @@ def add_data_deposit():
 
         # Menghitung nilai GAGAL_POTONG berdasarkan SELISIH
         gagal_potong_value = selisih_value + gagal_potong_sebelumnya_value
-        
+
         # Mendapatkan nilai sisa pokok sebelumnya
         sisa_pokok_sebelumnya_value = get_sisa_pokok_sebelumnya(borrow_id)
 
@@ -480,7 +496,7 @@ def add_data_deposit():
         conn.commit()
         messagebox.showinfo("Info", "Data berhasil ditambahkan ! ")
         print("Data added successfully")
-        update_trv_deposit()
+        select_based_deposit()
         logging.info("Data deposit berhasil ditambahkan")
 
     except Exception as e:
@@ -539,7 +555,7 @@ def get_sisa_pokok_sebelumnya(borrow_id):
     except Exception as e:
         print("Error in get_sisa_pokok_sebelumnya:", e)
         return 0  # Jika terjadi kesalahan, kembalikan nilai default 0
-    
+
 # function untuk update data borrow
 
 def update_data_borrow():
@@ -596,9 +612,53 @@ def update_data_borrow():
         print("Error", e)
         messagebox.showerror(
             "Error", "Pastikan format data yang diupdate sudah benar")
+        
+
+def delete_data_deposit():
+    try:
+        id = v_id.get()
+        if (messagebox.askyesno("Konfirmasi Hapus?", "Apakah yakin ingin menghapus data ini ?")):
+            query = "DELETE FROM DEPOSITS WHERE ID = {}".format(id)
+            cursor.execute(query)
+            conn.commit()
+            print("Success delete data")
+            select_based_deposit()
+        else:
+            return True
+    except Exception as e:
+        print("Error :", e)
+
+
+def export_data_deposit():
+    try:
+        # Inisialisasi workbook
+        wb = Workbook()
+        ws = wb.active
+
+        # Mendapatkan semua kolom pada TreeView
+        columns = trv_display_deposits["columns"]
+
+        # Menulis header kolom ke dalam file Excel
+        for col_idx, col_name in enumerate(columns, start=1):
+            ws.cell(row=1, column=col_idx).value = trv_display_deposits.heading(col_name)["text"]
+
+        # Menulis data baris ke dalam file Excel
+        for row_idx, item in enumerate(trv_display_deposits.get_children(), start=2):
+            values = trv_display_deposits.item(item)["values"]
+            for col_idx, value in enumerate(values, start=1):
+                ws.cell(row=row_idx, column=col_idx).value = value
+
+        # Menyimpan file Excel
+        file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx")])
+        if file_path:
+            wb.save(file_path)
+            messagebox.showinfo("Info", "Data berhasil diekspor ke Excel.")
+    except Exception as e:
+        print("Error : ", e)
+        messagebox.showerror("Error", f"Error: {str(e)}")
+
 
 # function untuk menampilkan data pinjaman dari database kedalam treeview
-
 
 def getrow_borrow(event):
     global borrow_id
@@ -629,7 +689,9 @@ def getrow_deposits(event):
 
     if 'values' in item and len(item['values']) >= 9:
         v_id.set(item['values'][1])
-        v_jumlah_setoran.set(item['values'][2])
+        v_puskesmas.set(item['values'][4])
+        v_nama.set(item['values'][5])
+        v_jumlah_setoran.set(item['values'][6])
 
     else:
         print("Error: Insufficient values in the 'values atribute.")
@@ -698,24 +760,52 @@ def export_data_borrow():
 
 def search():
     try:
-        q2 = q.get()
-        query = """
-        SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH FROM BORROW WHERE NAMA LIKE ? OR NIP LIKE ?
-        """
-        cursor.execute(query, ('%' + q2 + '%', '%' + q2 + '%'))
+        # Mendapatkan query sesuai dengan tabel yang sedang dicari
+        query = ""
+        params = ('%' + q.get() + '%', '%' + q.get() + '%')  # Menyediakan parameter untuk pencarian
+
+        if is_searching_borrow:
+            query = """
+                SELECT ID, NAMA, NIP, PUSKESMAS, TANGGAL_LAHIR, ALAMAT, JUMLAH_PINJAMAN, JANGKA_WAKTU, RESIKO_KREDIT, BAGI_HASIL, POKOK, TERIMA_BERSIH 
+                FROM BORROW 
+                WHERE NAMA LIKE ? OR NIP LIKE ?
+            """
+        elif is_searching_deposit:
+            query = """
+                SELECT DEPOSITS.ID, DEPOSITS.TIMESTAMP, BORROW.PUSKESMAS, BORROW.NAMA, DEPOSITS.JUMLAH_SETOR, DEPOSITS.SELISIH, DEPOSITS.GAGAL_POTONG, DEPOSITS.SISA_POKOK
+                FROM DEPOSITS
+                JOIN BORROW ON DEPOSITS.BORROW_ID = BORROW.ID
+                WHERE BORROW.NAMA LIKE ? OR DEPOSITS.BORROW_ID LIKE ?
+            """
+
+        # Eksekusi query
+        cursor.execute(query, params)  # Memberikan parameter saat menjalankan query
         conn.commit()
         rows = cursor.fetchall()
-        update_trv(rows)
-        update_trv2(rows)
-        update_trv3(rows)
-        update_trv4(rows)
-        update_trv5(rows)
+
+        # Panggil fungsi untuk memperbarui tampilan sesuai dengan tabel yang sedang dicari
+        if is_searching_borrow:
+            update_trv(rows)
+        elif is_searching_deposit:
+            update_trv_deposit(rows)
+
     except Exception as e:
         print("Error :", e)
         messagebox.showerror(
             "Error", "Terjadi Kesalahan saat pencarian data"
         )
 
+def search_by_borrow():
+    global is_searching_borrow, is_searching_deposit
+    is_searching_borrow = True
+    is_searching_deposit = False
+    search()
+
+def search_by_deposit():
+    global is_searching_borrow, is_searching_deposit
+    is_searching_borrow = False
+    is_searching_deposit = True
+    search()
 
 def clear():
     ent.delete(0, 'end')
@@ -725,6 +815,8 @@ def clear():
     select_based_credit_risk()
     select_based_profit_sharing()
     select_based_pokok()
+    select_based_deposit()
+    
 
 # untuk mengecek notebook yang aktif
 
@@ -920,21 +1012,18 @@ entry_jumlah_setoran.grid(row=1, column=1, padx=5, pady=5)
 
 # button untuk Input Data Setoran
 frame_btn_deposit = Frame(frameInputDataSetoran)
-update_btn_deposit = Button(
-    frame_btn_deposit, text="Update Data Setoran", command=update_data_borrow)
 add_btn_deposit = Button(
     frame_btn_deposit,
     text="Tambah Data Setoran",
     command=add_data_deposit
 )
 delete_btn_deposit = Button(
-    frame_btn_deposit, text="Hapus Data Setoran", command=delete_data_borrow)
+    frame_btn_deposit, text="Hapus Data Setoran", command=delete_data_deposit)
 export_btn_deposit = Button(
-    frame_btn_deposit, text="Export ke Setoran", command=export_data_borrow)
+    frame_btn_deposit, text="Export ke Setoran", command=export_data_deposit)
 
 frame_btn_deposit.grid(row=4, column=0, columnspan=5, sticky="w", pady=10)
 add_btn_deposit.pack(side=LEFT, padx=5)
-update_btn_deposit.pack(side=LEFT, padx=5)
 delete_btn_deposit.pack(side=LEFT, padx=5)
 export_btn_deposit.pack(side=LEFT, padx=5)
 
@@ -945,8 +1034,10 @@ lbl = Label(wrapperPencarian, text="Search")
 lbl.pack(side=LEFT, padx=10, pady=15)
 ent = Entry(wrapperPencarian, textvariable=q)
 ent.pack(side=LEFT, padx=6, pady=15)
-btn = Button(wrapperPencarian, text="Search", command=search)
-btn.pack(side=LEFT, padx=6, pady=15)
+search_borrow_btn = Button(wrapperPencarian, text="Search Pinjaman", command=search_by_borrow)
+search_borrow_btn.pack(side=LEFT, padx=6, pady=15)
+search_deposit_btn = Button(wrapperPencarian, text="Search Setoran", command=search_by_deposit)
+search_deposit_btn.pack(side=LEFT, padx=6, pady=15)
 cbtn = Button(wrapperPencarian, text="Clear", command=clear)
 cbtn.pack(side=LEFT, padx=(6, 20))
 
@@ -1068,7 +1159,7 @@ if __name__ == '__main__':
             select_all_borrow()
 
         # Panggil fungsi untuk mengisi treeview saat aplikasi dibuka
-        update_trv_deposit()
+        select_based_deposit()
 
         root.mainloop()
 
