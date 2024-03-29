@@ -368,11 +368,30 @@ def add_new_borrow():
             messagebox.showerror(
                 "Kesalahan", "Format tanggal lahir tidak valid")
             return
+        
+        # memeriksa apakah pengguna memiliki pinjaman yang belum selesai sebelumnya
+        cursor.execute("SELECT SISA_POKOK FROM DEPOSITS WHERE BORROW_ID IN (SELECT ID FROM BORROW WHERE NIP = ?) ORDER BY TIMESTAMP DESC LIMIT 1", (nip_value,))
+        sisa_pokok = cursor.fetchone()
+        if sisa_pokok:
+            sisa_pokok = sisa_pokok[0]
+        else:
+            sisa_pokok = 0
 
+        # periksa apakah pengguna memiliki pinjaman yang belum selesai sebelumnya
+        cursor.execute("SELECT COUNT(*) FROM DEPOSITS WHERE BORROW_ID IN (SELECT ID FROM BORROW WHERE NIP = ?) AND SISA_POKOK > 0", (nip_value,))
+        count = cursor.fetchone()[0]
+        if count > 0:
+            confirm = messagebox.askquestion("Konfirmasi", "Anda Memiliki pinjaman yang belum selesai. Apakah anda yakin ingin mengajukan pinjaman lagi ?")
+            if confirm == 'no':
+                return
+        
         confirm = messagebox.askquestion(
             "Konfirmasi", "Apakah data sudah benar ?")
 
         if confirm == 'yes':
+            # Hitung nilai TERIMA BERSIH
+            terima_bersih = jumlah_pinjaman_value - resiko_kredit_value - sisa_pokok
+
             # Jika user menekan Yes, Simpan data ke database
             query = """
                 INSERT INTO BORROW
@@ -390,7 +409,7 @@ def add_new_borrow():
                 "RESIKO_KREDIT": resiko_kredit_value,
                 "BAGI_HASIL": bagi_hasil_value,
                 "POKOK": round(pokok_value / 100) * 100,
-                "TERIMA_BERSIH": jumlah_pinjaman_value - resiko_kredit_value,
+                "TERIMA_BERSIH": terima_bersih,
                 "TIMESTAMP": timestamp
             }
             cursor.execute(query, params)
